@@ -13,10 +13,17 @@ if BACKEND_DIR not in sys.path:
 from app.database import Base, OperationalMetrics
 
 
+from sqlalchemy.pool import StaticPool
+
+
 @pytest.fixture(scope="session")
 def test_engine():
     """Session-wide in-memory SQLite engine for testing."""
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(bind=engine)
     yield engine
     engine.dispose()
@@ -24,17 +31,16 @@ def test_engine():
 
 @pytest.fixture
 def db_session(test_engine):
-    """Function-scoped clean database session."""
-    connection = test_engine.connect()
-    transaction = connection.begin()
-    Session = sessionmaker(bind=connection)
+    """Function-scoped clean database session that supports commit and cleans up rows after test."""
+    Session = sessionmaker(bind=test_engine)
     session = Session()
 
     yield session
 
     session.close()
-    transaction.rollback()
-    connection.close()
+    with test_engine.connect() as conn:
+        conn.execute(OperationalMetrics.__table__.delete())
+        conn.commit()
 
 
 @pytest.fixture
