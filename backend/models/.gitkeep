@@ -1,0 +1,2 @@
+# Placeholder to ensure models directory is tracked in git.
+# Model artifact ed_forecaster.joblib will be created by train_forecaster.py and is gitignored.
