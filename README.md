@@ -13,37 +13,7 @@ The system analyzes operational data to answer four questions:
 
 ## 2. System Architecture
 
-```text
-              HOSPITAL OPERATIONAL DATA
-                       │
-                       ▼
-              ┌──────────────────┐
-              │     LAYER 1      │
-              │  Current State   │
-              └────────┬─────────┘
-                       │
-              ┌────────┴─────────┐
-              ▼                  ▼
-      ┌───────────────┐  ┌───────────────┐
-      │    LAYER 2    │  │    LAYER 3    │
-      │  Forecasting  │  │    Anomaly    │
-      │               │  │   Detection   │
-      └───────┬───────┘  └───────┬───────┘
-              │                  │
-              └────────┬─────────┘
-                       ▼
-              ┌──────────────────┐
-              │     LAYER 4      │
-              │    Resource      │
-              │   Optimization   │
-              └────────┬─────────┘
-                       │
-                       ▼
-                RECOMMENDATIONS
-                       │
-                       ▼
-                    FRONTEND
-```
+![Hospital operations system architecture](Hospital%20AI%20Workflow%20Architecture.png)
 
 ## 3. Layer 1 — Current Hospital State
 
