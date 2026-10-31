@@ -14,8 +14,8 @@ the system as built (Milestones 1-5 complete, 16 backend tests passing).
   enhancements. If something seems missing, ask.
 - If plan.md, the code and a suggestion conflict, tell me. Never silently
   change the design or the plan.
-- Prefer simple, explainable methods. Test: could the student explain it
-  in one or two sentences?
+- Prefer the simplest approach that meets the requirement: fewest new
+  files, concepts and dependencies.
 - When told "change only X", change only X and list every change made.
 - Never claim something is verified unless it was run or inspected.
   Check with git diff and searches, not from memory.
