@@ -37,6 +37,16 @@ def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastRespon
             detail="Insufficient lag data. Upload at least 25 hours of operational data.",
         )
 
+    def _utc(dt):
+        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+    for newer, older in zip(rows, rows[1:]):
+        if _utc(newer.timestamp) - _utc(older.timestamp) != timedelta(hours=1):
+            raise HTTPException(
+                status_code=400,
+                detail="Data has a gap in the last 25 hours; upload or send the missing hours",
+            )
+
     latest = rows[0]
     lag_1 = rows[1]
     lag_24 = rows[24]
