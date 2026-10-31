@@ -55,3 +55,28 @@
   latest 25 rows are exactly one hour apart. If not, it returns a clear
   400 error, because the model's 1-hour and 24-hour lags would otherwise
   be wrong.
+
+### 2026-10-31: Milestone 2 (REQ-013)
+
+- Code written by a Sonnet 5.5 subagent, diff reviewed by the main agent.
+- Tasks done: backend/scripts/simulate_live_feed.py, 4 new tests in
+  backend/tests/test_simulator.py, README section "7. Live feed simulator".
+- Command: .\.venv\Scripts\python.exe -m pytest backend/tests -q -p no:cacheprovider
+  - Result: **28 passed, 1 warning** (24 earlier + 4 new).
+- Manual run (temporary SQLite file, deleted afterwards; hospital_operations.db untouched):
+  uploaded hospital_operations_synthetic.csv (1440 rows, latest 2026-11-29T23:00:00Z);
+  simulator --count 3 --interval 1 posted 2026-11-30T00:00:00Z, 01:00:00Z and
+  02:00:00Z (all inserted); current-state then showed 2026-11-30T02:00:00Z
+  (+3 hours). With the backend stopped the simulator printed
+  "Cannot reach the backend at http://localhost:8000: ..." and exited with code 1.
+- Deviation from plan: test_simulated_record_posts_and_becomes_current uses
+  generate_synthetic_data(days=8) instead of days=3, because 3 days starts on
+  a Thursday and ends Saturday 23:00, and Sunday 00:00 has no matching row.
+- Files changed: backend/scripts/simulate_live_feed.py (new),
+  backend/tests/test_simulator.py (new), README.md, docs/loop_log.md.
+- Dependencies added: none (standard library only).
+- Explanation, simulator: It asks the backend for the latest record time,
+  then builds a record for the next hour using the values from the same
+  weekday and hour in the sample CSV. It sends that record to the live
+  endpoint every few seconds and stops with a clear message if the backend
+  is down or empty.
