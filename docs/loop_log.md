@@ -80,3 +80,44 @@
   weekday and hour in the sample CSV. It sends that record to the live
   endpoint every few seconds and stops with a clear message if the backend
   is down or empty.
+
+### 2026-10-31: Milestone 3 (REQ-014, NQ-7, NQ-11)
+
+- Student made and committed an edit to docs/project_context.md (commit
+  3d5d5cb on this branch, "Prefer the simplest approach..." rule). BLOCKED.md
+  from the earlier stop was deleted.
+- Code written by a Sonnet 5.5 subagent, diff reviewed by the main agent.
+- Tasks done: page.tsx (showLoading parameter, 10 s polling, livePaused and
+  lastRefreshedAt state), Navbar.tsx ("Last refreshed" chip and the
+  "Live updates paused. Showing last data." message). No other frontend file.
+- Backend suite: 28 passed, 1 warning.
+- npm run build: exit 0. npm run lint: exit 1, one error that is NOT in a file
+  changed here: ForecastCard.tsx:67:23 no-explicit-any. The same error exists
+  without this milestone's changes (baseline lint also had 2 errors and 3
+  warnings in page.tsx that this milestone removed).
+- NQ-11 check (temporary SQLite file, port 8011): simulator 200 writes at
+  0.1 s intervals while 3 threads polled the 4 GET endpoints. Result: simulator
+  exit 0, 200 lines, 1036 reads all HTTP 200 (259 per endpoint, no 400/404),
+  "database is locked" occurred 0 times.
+- Browser check (integrated browser, temp DB): Last refreshed advanced and
+  Latest data moved after the simulator posted; stopping the backend showed
+  the paused message with cards still filled; restarting cleared it. The
+  below-640px layout was not checked.
+- Files changed: frontend/src/app/page.tsx, frontend/src/components/Navbar.tsx,
+  docs/loop_log.md. Dependencies added: none (npm install used the existing
+  lockfile).
+- Explanation, dashboard polling: Every 10 seconds the page quietly asks the
+  backend for the four layer results again and updates the cards without
+  showing loading placeholders. The navbar shows when the last refresh worked,
+  and if the backend cannot be reached it keeps the old data and says live
+  updates are paused.
+
+### 2026-10-31: Milestone 3 lint fix (student approved)
+
+- Student approved a one-line type fix in frontend/src/components/ForecastCard.tsx
+  (pre-existing no-explicit-any error): `observed: pt.arrivals as number | null`
+  and `observed: null` replace `null as any`. Behaviour unchanged.
+- npm run lint: exit 0. npm run build: exit 0 (Next.js, 4 static pages).
+- Tag cp-01-m3 already points at f7395c9 (before the fix); tags are never
+  moved, so the final M3 checkpoint is tagged cp-01-m3b.
+- Files changed: frontend/src/components/ForecastCard.tsx, docs/loop_log.md.

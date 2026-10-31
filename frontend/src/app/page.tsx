@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Upload, RefreshCw, AlertCircle } from "lucide-react";
+import { Upload } from "lucide-react";
 import {
   fetchCurrentState,
   fetchForecast,
@@ -21,9 +21,16 @@ import { ForecastCard } from "@/components/ForecastCard";
 import { AnomalySign } from "@/components/AnomalySign";
 import { RecommendationList } from "@/components/RecommendationList";
 
+const POLL_INTERVAL_MS = 10000;
+
+function isNetworkFailure(err: unknown): boolean {
+  return typeof (err as { status?: unknown } | null)?.status !== "number";
+}
+
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  const [livePaused, setLivePaused] = useState(false);
 
   // Layer 1 State
   const [currentState, setCurrentState] = useState<CurrentStateResponse | null>(null);
@@ -46,67 +53,113 @@ export default function DashboardPage() {
   const [errorRecommendations, setErrorRecommendations] = useState<string | null>(null);
 
   // Fetch all endpoints independently for isolated resilience
-  const refreshDashboard = useCallback(async () => {
-    setIsRefreshing(true);
+  const refreshDashboard = useCallback((showLoading: boolean) => {
+    // Per-call tally so overlapping refreshes never share state.
+    let settled = 0;
+    let unreachable = false;
+    const settle = (wasUnreachable: boolean) => {
+      if (wasUnreachable) unreachable = true;
+      settled += 1;
+      if (settled < 4) return;
+      if (unreachable) {
+        setLivePaused(true);
+      } else {
+        setLivePaused(false);
+        setLastRefreshedAt(new Date());
+      }
+    };
 
-    // 1. Current State
-    setLoadingState(true);
-    fetchCurrentState()
-      .then((data) => {
+    // Layer request: on network failure during a poll, keep the card untouched.
+    const run = <T,>(
+      request: () => Promise<T>,
+      onData: (data: T) => void,
+      onError: (message: string) => void,
+      setLoading: (v: boolean) => void,
+      fallbackMessage: string
+    ) => {
+      if (showLoading) setLoading(true);
+      request()
+        .then((data) => {
+          onData(data);
+          settle(false);
+        })
+        .catch((err) => {
+          const unreachableErr = isNetworkFailure(err);
+          if (!(unreachableErr && !showLoading)) {
+            onError(err?.message || fallbackMessage);
+          }
+          settle(unreachableErr);
+        })
+        .finally(() => {
+          if (showLoading) setLoading(false);
+        });
+    };
+
+    run(
+      fetchCurrentState,
+      (data) => {
         setCurrentState(data);
         setErrorState(null);
-      })
-      .catch((err) => {
+      },
+      (message) => {
         setCurrentState(null);
-        setErrorState(err.message || "Failed to load current state.");
-      })
-      .finally(() => setLoadingState(false));
+        setErrorState(message);
+      },
+      setLoadingState,
+      "Failed to load current state."
+    );
 
-    // 2. Forecast
-    setLoadingForecast(true);
-    fetchForecast()
-      .then((data) => {
+    run(
+      fetchForecast,
+      (data) => {
         setForecast(data);
         setErrorForecast(null);
-      })
-      .catch((err) => {
+      },
+      (message) => {
         setForecast(null);
-        setErrorForecast(err.message || "Failed to load arrival forecast.");
-      })
-      .finally(() => setLoadingForecast(false));
+        setErrorForecast(message);
+      },
+      setLoadingForecast,
+      "Failed to load arrival forecast."
+    );
 
-    // 3. Anomalies
-    setLoadingAnomaly(true);
-    fetchAnomalies()
-      .then((data) => {
+    run(
+      fetchAnomalies,
+      (data) => {
         setAnomaly(data);
         setErrorAnomaly(null);
-      })
-      .catch((err) => {
+      },
+      (message) => {
         setAnomaly(null);
-        setErrorAnomaly(err.message || "Failed to load anomaly detection.");
-      })
-      .finally(() => setLoadingAnomaly(false));
+        setErrorAnomaly(message);
+      },
+      setLoadingAnomaly,
+      "Failed to load anomaly detection."
+    );
 
-    // 4. Recommendations
-    setLoadingRecommendations(true);
-    fetchRecommendations()
-      .then((data) => {
+    run(
+      fetchRecommendations,
+      (data) => {
         setRecommendations(data);
         setErrorRecommendations(null);
-      })
-      .catch((err) => {
+      },
+      (message) => {
         setRecommendations(null);
-        setErrorRecommendations(err.message || "Failed to load recommendations.");
-      })
-      .finally(() => {
-        setLoadingRecommendations(false);
-        setIsRefreshing(false);
-      });
+        setErrorRecommendations(message);
+      },
+      setLoadingRecommendations,
+      "Failed to load recommendations."
+    );
   }, []);
 
   useEffect(() => {
-    refreshDashboard();
+    const id = setTimeout(() => refreshDashboard(true), 0);
+    return () => clearTimeout(id);
+  }, [refreshDashboard]);
+
+  useEffect(() => {
+    const id = setInterval(() => refreshDashboard(false), POLL_INTERVAL_MS);
+    return () => clearInterval(id);
   }, [refreshDashboard]);
 
   const isEmptyDatabase = !loadingState && !currentState && errorState?.includes("404");
@@ -117,6 +170,8 @@ export default function DashboardPage() {
       <Navbar
         latestTimestamp={currentState?.timestamp}
         onOpenUpload={() => setIsModalOpen(true)}
+        lastRefreshedAt={lastRefreshedAt}
+        livePaused={livePaused}
       />
 
       {/* Main Dashboard Content */}
@@ -188,7 +243,7 @@ export default function DashboardPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
-          refreshDashboard();
+          refreshDashboard(true);
         }}
       />
     </div>
