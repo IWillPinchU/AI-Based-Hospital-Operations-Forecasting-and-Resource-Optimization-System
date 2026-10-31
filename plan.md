@@ -198,6 +198,7 @@ A single table created at application startup with SQLAlchemy `Base.metadata.cre
   "status": "success",
   "filename": "hospital_ops.csv",
   "rows_processed": 168,
+  "rows_updated": 0,
   "latest_timestamp": "2026-10-29T14:00:00Z"
 }
 ```

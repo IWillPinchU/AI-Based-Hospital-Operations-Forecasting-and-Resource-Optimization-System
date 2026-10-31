@@ -5,19 +5,6 @@ from app.main import app
 from app.database import get_db, Base, OperationalMetrics
 
 
-@pytest.fixture
-def client(test_engine, db_session):
-    """Test client using an in-memory SQLite database session."""
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 def test_empty_database_returns_404(client):
@@ -138,7 +125,9 @@ def test_layer_1_current_state_metrics(client):
     assert response.status_code == 200
     data = response.json()
 
-    # Matches the latest record (14:00)
+    # Matches the latest record (14:00) with UTC trailing 'Z'
+    assert data["timestamp"] == "2026-10-29T14:00:00Z"
+    assert data["timestamp"].endswith("Z")
     assert data["ed_arrivals"] == 57
     assert data["ed_patients"] == 46
     assert data["available_beds"] == 42

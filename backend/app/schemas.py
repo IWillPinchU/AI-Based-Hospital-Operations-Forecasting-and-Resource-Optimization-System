@@ -41,6 +41,13 @@ class CurrentStateResponse(BaseModel):
     doctors_available: int
     metrics: DepartmentMetrics
 
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
 
 # Schemas for future layers (declared here per plan.md §11.1)
 class ModelMetadata(BaseModel):
@@ -56,6 +63,13 @@ class ForecastResponse(BaseModel):
     expected_net_change: float
     model_metadata: ModelMetadata
 
+    @field_validator("target_timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
 
 class AnomalyResponse(BaseModel):
     """Layer 3 Anomaly Detection response schema."""
@@ -66,6 +80,13 @@ class AnomalyResponse(BaseModel):
     is_anomaly: bool
     severity: str
     explanation: str
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 
 class RecommendationItem(BaseModel):

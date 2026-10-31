@@ -24,8 +24,11 @@ def get_current_hospital_state(db: Session) -> CurrentStateResponse:
     nurse_ratio = round(latest.ed_patients / max(latest.nurses_available, 1), 2)
     doctor_ratio = round(latest.ed_patients / max(latest.doctors_available, 1), 2)
 
+    from datetime import timezone
+    ts = latest.timestamp.replace(tzinfo=timezone.utc) if latest.timestamp.tzinfo is None else latest.timestamp.astimezone(timezone.utc)
+
     return CurrentStateResponse(
-        timestamp=latest.timestamp,
+        timestamp=ts,
         ed_arrivals=latest.ed_arrivals,
         ed_patients=latest.ed_patients,
         available_beds=latest.available_beds,
