@@ -22,3 +22,14 @@
   docs/BLOCKED.md (created, awaiting plan approval).
 - Stopped after Phase 2: plan approval not given and one blocking question
   (BQ-1). See docs/BLOCKED.md.
+
+### 2026-10-31: plan revision
+
+- Student approved BQ-1. Recorded as decision D-1 (live ingestion
+  supersedes plan.md §2.2 for ingestion; CSV upload unchanged).
+- Student accepted NQ-1 to NQ-6, amended NQ-7, and added NQ-8 to NQ-12.
+  Added REQ-015 (forecast gap check), the `+05:30` offset test, the
+  simulator "backend unreachable" test, and the M3 concurrency check.
+- Files changed: expansion_plan.md (rewritten Step 1 section),
+  docs/loop_log.md, docs/BLOCKED.md (still present, uncommitted).
+- No code written. Stopped for final plan approval.
