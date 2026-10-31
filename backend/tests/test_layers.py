@@ -313,3 +313,181 @@ def test_layer_3_anomaly_severity_classifications(db_session, client):
     assert data["timestamp"].endswith("Z")
     assert data["severity"] == "UNUSUAL_DROP"
     assert data["is_anomaly"] is True
+
+
+def test_layer_4_surge_scenario_recommends_nurses_and_disclaimer(db_session, client):
+    """REQ-007: Surge scenario generates REC-001 nurse recommendation and includes advisory disclaimer."""
+    from datetime import timedelta
+    from app.optimizer import get_resource_recommendations
+    from app.config import ADVISORY_DISCLAIMER
+
+    base_time = datetime(2026, 10, 20, 0, 0, 0, tzinfo=timezone.utc)
+    # Insert 26 rows to allow Layer 2 forecasting
+    for i in range(25):
+        db_session.add(
+            OperationalMetrics(
+                timestamp=base_time + timedelta(hours=i),
+                ed_arrivals=50,
+                ed_patients=40,
+                available_beds=60,
+                icu_occupancy_pct=75.0,
+                nurses_available=10,
+                doctors_available=4,
+            )
+        )
+    # Latest record at t=25: active=46, arrivals=57, nurses=10, doctors=4, beds=60, icu=75%
+    latest_rec = OperationalMetrics(
+        timestamp=base_time + timedelta(hours=25),
+        ed_arrivals=57,
+        ed_patients=46,
+        available_beds=60,
+        icu_occupancy_pct=75.0,
+        nurses_available=10,
+        doctors_available=4,
+    )
+    db_session.add(latest_rec)
+    db_session.commit()
+
+    # Function call
+    result = get_resource_recommendations(db_session)
+
+    # 1. Advisory disclaimer must be present in every response
+    assert result.advisory_disclaimer == ADVISORY_DISCLAIMER
+    assert "PROVISIONAL" in result.advisory_disclaimer
+
+    # 2. Staffing recommendation
+    rec_001 = next((r for r in result.recommendations if r.id == "REC-001"), None)
+    assert rec_001 is not None
+    assert rec_001.category == "STAFFING_NURSE"
+    assert rec_001.priority == "HIGH"
+    assert "additional nurse" in rec_001.action
+    assert "Projected active load" in rec_001.rationale
+    assert "Within max redeployment budget" in rec_001.constraints_checked
+
+    # 3. No bed recommendation since beds=60 (>= 50) and icu=75.0% (< 88.0%)
+    rec_002 = next((r for r in result.recommendations if r.id == "REC-002"), None)
+    assert rec_002 is None
+
+    # Endpoint test via client
+    api_resp = client.get("/api/v1/recommendations")
+    assert api_resp.status_code == 200
+    data = api_resp.json()
+    assert data["timestamp"].endswith("Z")
+    assert data["advisory_disclaimer"] == ADVISORY_DISCLAIMER
+    assert len(data["recommendations"]) >= 1
+
+
+def test_layer_4_nurse_recommendation_capped_at_max(db_session):
+    """REQ-007: Recommended nurses never exceeds MAX_NURSES_REDEPLOYABLE."""
+    from datetime import timedelta
+    from app.optimizer import get_resource_recommendations
+    from app.config import MAX_NURSES_REDEPLOYABLE
+
+    base_time = datetime(2026, 10, 20, 0, 0, 0, tzinfo=timezone.utc)
+    for i in range(25):
+        db_session.add(
+            OperationalMetrics(
+                timestamp=base_time + timedelta(hours=i),
+                ed_arrivals=50,
+                ed_patients=40,
+                available_beds=60,
+                icu_occupancy_pct=75.0,
+                nurses_available=5,
+                doctors_available=2,
+            )
+        )
+    # Huge active patient count (e.g. 120 patients with only 4 nurses) -> deficit > 20
+    db_session.add(
+        OperationalMetrics(
+            timestamp=base_time + timedelta(hours=25),
+            ed_arrivals=50,
+            ed_patients=120,
+            available_beds=60,
+            icu_occupancy_pct=75.0,
+            nurses_available=4,
+            doctors_available=2,
+        )
+    )
+    db_session.commit()
+
+    result = get_resource_recommendations(db_session)
+    rec_001 = next((r for r in result.recommendations if r.id == "REC-001"), None)
+    assert rec_001 is not None
+    # Must be capped at MAX_NURSES_REDEPLOYABLE (4)
+    assert f"Consider allocating {MAX_NURSES_REDEPLOYABLE} additional nurses" in rec_001.action
+    assert result.resource_state.nurse_deficit > MAX_NURSES_REDEPLOYABLE
+
+
+def test_layer_4_bed_and_icu_rules_fire_separately_and_together(db_session):
+    """REQ-007: Bed and ICU alert conditions fire separately and together, naming ONLY conditions that fired."""
+    from datetime import timedelta
+    from app.optimizer import get_resource_recommendations
+    from app.config import MIN_AVAILABLE_BEDS_THRESHOLD, ICU_OCCUPANCY_WARNING_PCT
+
+    base_time = datetime(2026, 10, 20, 0, 0, 0, tzinfo=timezone.utc)
+    for i in range(25):
+        db_session.add(
+            OperationalMetrics(
+                timestamp=base_time + timedelta(hours=i),
+                ed_arrivals=30,
+                ed_patients=20,
+                available_beds=60,
+                icu_occupancy_pct=75.0,
+                nurses_available=10,
+                doctors_available=4,
+            )
+        )
+
+    # 1. Only Bed alert fires (beds=42 < 50, icu=75.0% < 88.0%)
+    latest_rec = OperationalMetrics(
+        timestamp=base_time + timedelta(hours=25),
+        ed_arrivals=30,
+        ed_patients=20,
+        available_beds=42,
+        icu_occupancy_pct=75.0,
+        nurses_available=10,
+        doctors_available=4,
+    )
+    db_session.add(latest_rec)
+    db_session.commit()
+
+    res_bed_only = get_resource_recommendations(db_session)
+    rec_bed = next((r for r in res_bed_only.recommendations if r.id == "REC-002"), None)
+    assert rec_bed is not None
+    assert f"Available beds (42) below minimum threshold ({MIN_AVAILABLE_BEDS_THRESHOLD})." == rec_bed.rationale
+    assert "ICU occupancy" not in rec_bed.rationale
+
+    # 2. Only ICU alert fires (beds=65 >= 50, icu=91.5% >= 88.0%)
+    latest_rec.available_beds = 65
+    latest_rec.icu_occupancy_pct = 91.5
+    db_session.commit()
+
+    res_icu_only = get_resource_recommendations(db_session)
+    rec_icu = next((r for r in res_icu_only.recommendations if r.id == "REC-002"), None)
+    assert rec_icu is not None
+    assert f"ICU occupancy (91.5%) at or above warning level ({ICU_OCCUPANCY_WARNING_PCT:.1f}%)." == rec_icu.rationale
+    assert "Available beds" not in rec_icu.rationale
+
+    # 3. Both Bed and ICU alerts fire (beds=38 < 50, icu=92.0% >= 88.0%)
+    latest_rec.available_beds = 38
+    latest_rec.icu_occupancy_pct = 92.0
+    db_session.commit()
+
+    res_both = get_resource_recommendations(db_session)
+    rec_both = next((r for r in res_both.recommendations if r.id == "REC-002"), None)
+    assert rec_both is not None
+    expected_rationale = (
+        f"Available beds (38) below minimum threshold ({MIN_AVAILABLE_BEDS_THRESHOLD}) and "
+        f"ICU occupancy (92.0%) at or above warning level ({ICU_OCCUPANCY_WARNING_PCT:.1f}%)."
+    )
+    assert rec_both.rationale == expected_rationale
+
+    # 4. Neither alert fires (beds=60 >= 50, icu=80.0% < 88.0%)
+    latest_rec.available_beds = 60
+    latest_rec.icu_occupancy_pct = 80.0
+    db_session.commit()
+
+    res_neither = get_resource_recommendations(db_session)
+    rec_neither = next((r for r in res_neither.recommendations if r.id == "REC-002"), None)
+    assert rec_neither is None
+

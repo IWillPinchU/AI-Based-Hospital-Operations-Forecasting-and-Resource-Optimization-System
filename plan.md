@@ -83,9 +83,7 @@ A college major project demonstrating a decision-support and operational intelli
 3. **On-Demand Evaluation:** Each GET endpoint computes its response dynamically when requested by the frontend from `operational_metrics`.
 4. **Provisional Constraints & Thresholds (`app/config.py`) [PROVISIONAL]:**
    - `TARGET_PATIENTS_PER_NURSE = 4.0` (1 nurse per 4 active ED patients).
-   - `TARGET_PATIENTS_PER_DOCTOR = 15.0` (1 doctor per 15 active ED patients).
    - `MAX_NURSES_REDEPLOYABLE = 4` (max 4 nurses shifted to ED per hour).
-   - `MAX_DOCTORS_REDEPLOYABLE = 2` (max 2 doctors shifted to ED per hour).
    - `FORECAST_WEIGHT = 0.5` (weight applied to forecasted net arrivals).
    - `MIN_AVAILABLE_BEDS_THRESHOLD = 50` (triggers bed alert when $\text{available\_beds} < 50$).
    - `ICU_OCCUPANCY_WARNING_PCT = 88.0` (triggers ICU alert when $\text{icu\_occupancy\_pct} \ge 88.0\%$).
@@ -322,10 +320,8 @@ A single table created at application startup with SQLAlchemy `Base.metadata.cre
      *(Estimated discharges excluded in v1: $\text{est\_discharges} = 0$. With active $= 46$, $y_t = 57$, $\hat{y}_{t+1} = 61.0$, $w_{\text{fc}} = 0.5 \implies 46 + \lceil 0.5 \times 4.0 \rceil = 48$)*.
   2. *Required Staffing:*
      $$N_{\text{req}} = \left\lceil \frac{L_{\text{proj}}}{\text{TARGET\_PATIENTS\_PER\_NURSE}} \right\rceil = \left\lceil \frac{48}{4.0} \right\rceil = 12$$
-     $$D_{\text{req}} = \left\lceil \frac{L_{\text{proj}}}{\text{TARGET\_PATIENTS\_PER\_DOCTOR}} \right\rceil = \left\lceil \frac{48}{15.0} \right\rceil = 4$$
   3. *Staffing Delta:*
      $$\Delta N = \min(\max(N_{\text{req}} - N_{\text{current}}, 0), \text{MAX\_NURSES\_REDEPLOYABLE}) = \min(12 - 10, 4) = 2$$
-     $$\Delta D = \min(\max(D_{\text{req}} - D_{\text{current}}, 0), \text{MAX\_DOCTORS\_REDEPLOYABLE}) = \min(4 - 4, 2) = 0$$
   4. *Bed & ICU Warning:*
      If $\text{available\_beds} < \text{MIN\_AVAILABLE\_BEDS\_THRESHOLD}$ ($42 < 50$ [PROVISIONAL]) or $\text{icu\_occupancy\_pct} \ge \text{ICU\_OCCUPANCY\_WARNING\_PCT}$ ($\ge 88.0\%$ [PROVISIONAL]), trigger bed buffer review recommendation.
      *Rationale Construction Rule:* The recommendation's rationale must state only the specific condition(s) that actually fired, e.g. "Available beds (42) below minimum threshold (50)" and/or "ICU occupancy (91%) at or above warning level (88%)". Never mention a condition that did not fire.
@@ -439,14 +435,14 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 
 ### 11.1 Backend Core Application Files
 - `backend/app/main.py`: Creates FastAPI application, configures CORS middleware, mounts routes from `app/routes.py`, and initializes database tables on startup via `Base.metadata.create_all(bind=engine)`.
-- `backend/app/config.py`: Reads `DATABASE_URL` and `CORS_ORIGINS`, and defines all provisional placeholder constraints and anomaly thresholds (`TARGET_PATIENTS_PER_NURSE = 4.0`, `TARGET_PATIENTS_PER_DOCTOR = 15.0`, `MAX_NURSES_REDEPLOYABLE = 4`, `MAX_DOCTORS_REDEPLOYABLE = 2`, `FORECAST_WEIGHT = 0.5`, `MIN_AVAILABLE_BEDS_THRESHOLD = 50`, `ICU_OCCUPANCY_WARNING_PCT = 88.0`, `ANOMALY_CRITICAL_SURGE_PCT = 30.0`, `ANOMALY_MODERATE_SURGE_PCT = 15.0`, `ANOMALY_MODERATE_DROP_PCT = -15.0`, `ANOMALY_UNUSUAL_DROP_PCT = -30.0`).
+- `backend/app/config.py`: Reads `DATABASE_URL` and `CORS_ORIGINS`, and defines all provisional placeholder constraints and anomaly thresholds (`TARGET_PATIENTS_PER_NURSE = 4.0`, `MAX_NURSES_REDEPLOYABLE = 4`, `FORECAST_WEIGHT = 0.5`, `MIN_AVAILABLE_BEDS_THRESHOLD = 50`, `ICU_OCCUPANCY_WARNING_PCT = 88.0`, `ANOMALY_CRITICAL_SURGE_PCT = 30.0`, `ANOMALY_MODERATE_SURGE_PCT = 15.0`, `ANOMALY_MODERATE_DROP_PCT = -15.0`, `ANOMALY_UNUSUAL_DROP_PCT = -30.0`).
 - `backend/app/database.py`: Sets up SQLAlchemy `engine`, `SessionLocal`, base declarative class `Base`, and the `OperationalMetrics` table model.
 - `backend/app/schemas.py`: Contains all Pydantic schemas: `OperationalRowSchema`, `IngestionResponse`, `CurrentStateResponse`, `ForecastResponse`, `AnomalyResponse`, and `RecommendationResponse`.
 - `backend/app/ingestion.py`: Reads raw CSV files with Pandas, validates columns and positive ranges, converts timestamps to UTC, and bulk-inserts rows into SQLite.
 - `backend/app/state.py`: Implements Layer 1 by fetching the latest row from `operational_metrics` and calculating patient-to-nurse and patient-to-doctor ratios.
 - `backend/app/forecast.py`: Implements Layer 2 by verifying `ed_forecaster.joblib` exists, fetching the latest 25 rows for lags ($t, t-1, t-24$), and predicting next-hour arrivals.
 - `backend/app/anomaly.py`: Implements Layer 3 by computing the historical mean baseline for the matching hour-of-week and classifying deviation percentage into 5 severity categories using named thresholds from `app/config.py`.
-- `backend/app/optimizer.py`: Implements Layer 4 by evaluating required nurse and doctor counts against target ratios, calculating staffing deltas capped at redeployment limits, and checking bed thresholds.
+- `backend/app/optimizer.py`: Implements Layer 4 by evaluating required nurse counts against target ratios, calculating staffing deltas capped at redeployment limits, and checking bed thresholds.
 - `backend/app/routes.py`: Defines the 5 endpoints (`POST /api/v1/ingest/csv`, `GET /api/v1/current-state`, `GET /api/v1/forecast`, `GET /api/v1/anomalies`, `GET /api/v1/recommendations`).
 
 ### 11.2 Backend Scripts & Artifacts

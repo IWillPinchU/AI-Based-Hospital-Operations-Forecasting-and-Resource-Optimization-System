@@ -9,11 +9,9 @@ CORS_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://l
 
 # Layer 4 Staffing Ratios
 TARGET_PATIENTS_PER_NURSE: float = 4.0
-TARGET_PATIENTS_PER_DOCTOR: float = 15.0
 
 # Layer 4 Staffing Redeployment Limits (per hour)
 MAX_NURSES_REDEPLOYABLE: int = 4
-MAX_DOCTORS_REDEPLOYABLE: int = 2
 
 # Layer 4 Forecast Weight on Net Surge
 FORECAST_WEIGHT: float = 0.5
@@ -27,3 +25,10 @@ ANOMALY_CRITICAL_SURGE_PCT: float = 30.0
 ANOMALY_MODERATE_SURGE_PCT: float = 15.0
 ANOMALY_MODERATE_DROP_PCT: float = -15.0
 ANOMALY_UNUSUAL_DROP_PCT: float = -30.0
+
+# Advisory Notice
+ADVISORY_DISCLAIMER: str = (
+    "PROVISIONAL: Recommendations are advisory decision-support suggestions "
+    "based on placeholder hospital constraints and require clinical verification."
+)
+

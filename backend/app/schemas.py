@@ -95,7 +95,7 @@ class RecommendationItem(BaseModel):
     priority: str
     action: str
     rationale: str
-    constraints_checked: str
+    constraints_checked: Optional[str] = None
 
 
 class ResourceState(BaseModel):
@@ -112,3 +112,10 @@ class RecommendationResponse(BaseModel):
     status_summary: str
     recommendations: List[RecommendationItem]
     resource_state: ResourceState
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v

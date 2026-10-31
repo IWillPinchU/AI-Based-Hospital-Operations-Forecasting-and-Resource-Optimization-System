@@ -6,11 +6,13 @@ from app.ingestion import ingest_operational_csv
 from app.state import get_current_hospital_state
 from app.forecast import get_ed_forecast
 from app.anomaly import detect_ed_anomalies
+from app.optimizer import get_resource_recommendations
 from app.schemas import (
     IngestionResponse,
     CurrentStateResponse,
     ForecastResponse,
     AnomalyResponse,
+    RecommendationResponse,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -38,3 +40,9 @@ def read_ed_forecast(db: Session = Depends(get_db)):
 def read_ed_anomalies(db: Session = Depends(get_db)):
     """Layer 3: Compares current ED arrivals against historical hour-of-week baseline."""
     return detect_ed_anomalies(db)
+
+
+@router.get("/recommendations", response_model=RecommendationResponse, tags=["Layer 4"])
+def read_resource_recommendations(db: Session = Depends(get_db)):
+    """Layer 4: Returns advisory nurse staffing and bed turnover adjustments."""
+    return get_resource_recommendations(db)
