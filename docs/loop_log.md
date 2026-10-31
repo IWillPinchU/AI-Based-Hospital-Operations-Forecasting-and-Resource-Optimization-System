@@ -111,3 +111,13 @@
   showing loading placeholders. The navbar shows when the last refresh worked,
   and if the backend cannot be reached it keeps the old data and says live
   updates are paused.
+
+### 2026-10-31: Milestone 3 lint fix (student approved)
+
+- Student approved a one-line type fix in frontend/src/components/ForecastCard.tsx
+  (pre-existing no-explicit-any error): `observed: pt.arrivals as number | null`
+  and `observed: null` replace `null as any`. Behaviour unchanged.
+- npm run lint: exit 0. npm run build: exit 0 (Next.js, 4 static pages).
+- Tag cp-01-m3 already points at f7395c9 (before the fix); tags are never
+  moved, so the final M3 checkpoint is tagged cp-01-m3b.
+- Files changed: frontend/src/components/ForecastCard.tsx, docs/loop_log.md.

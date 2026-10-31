@@ -48,7 +48,7 @@ export function ForecastCard({ data, isLoading, error }: ForecastCardProps) {
   const chartPoints = (data.recent_arrivals || []).map((pt, idx) => ({
     time: formatUtcTime(pt.timestamp),
     rawTime: pt.timestamp,
-    observed: pt.arrivals,
+    observed: pt.arrivals as number | null,
     forecast: null as number | null,
     isForecast: false,
     label: `Hour -${23 - idx}`,
@@ -64,7 +64,7 @@ export function ForecastCard({ data, isLoading, error }: ForecastCardProps) {
   chartPoints.push({
     time: formatUtcTime(data.target_timestamp),
     rawTime: data.target_timestamp,
-    observed: null as any,
+    observed: null,
     forecast: data.predicted_ed_arrivals,
     isForecast: true,
     label: "Next hour (projected)",
