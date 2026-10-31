@@ -30,11 +30,11 @@ export function Navbar({
           <div className="w-10 h-10 rounded bg-[#0A6E73] text-white flex items-center justify-center shrink-0">
             <Activity className="w-5 h-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="font-heading text-lg sm:text-xl font-bold text-[#122B32] truncate">
               Hospital Operations Forecasting and Resource Optimization System
             </h1>
-            <p className="text-xs text-[#4A6369]">
+            <p className="text-xs text-[#4A6369] truncate">
               Emergency department decision support and capacity telemetry
             </p>
           </div>
@@ -42,7 +42,7 @@ export function Navbar({
 
         {/* Timestamp and Ingestion Button */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB]">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB] whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-[#0A6E73]" aria-hidden="true" />
             <span>Latest data:</span>
             <span className="font-semibold text-[#122B32]">
@@ -51,7 +51,7 @@ export function Navbar({
           </div>
 
           {lastRefreshedAt && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB]">
+            <div className="hidden xl:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB] whitespace-nowrap">
               <RefreshCw className="w-3.5 h-3.5 text-[#0A6E73]" aria-hidden="true" />
               <span>Last refreshed:</span>
               <span className="font-semibold text-[#122B32]">

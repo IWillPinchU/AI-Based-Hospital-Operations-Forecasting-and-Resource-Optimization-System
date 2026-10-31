@@ -125,3 +125,13 @@
 ### 2026-10-31: finish
 
 - As built note added to expansion_plan.md; Step 1 status COMPLETE.
+
+### 2026-10-31: header layout fix (reported by the student)
+
+- Problem: the page title overlapped the "Latest data" and "Last refreshed" chips
+  (screenshot). Cause: the title's wrapper had no min-w-0, so it could not
+  truncate, and the added chip made the right side wider.
+- Fix in frontend/src/components/Navbar.tsx only: min-w-0 on the title wrapper,
+  truncate on the subtitle, whitespace-nowrap on the chips, and "Last refreshed"
+  shown from the xl breakpoint (1280px) up. The paused message is unchanged.
+- npm run lint exit 0, npm run build exit 0. Not visually re-checked in a browser.
