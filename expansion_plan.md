@@ -11,8 +11,8 @@ Branch: `exp/01-live-ingestion` (from `expansion` at `d721af3`).
 Scope (from the project_context.md roadmap): single-record POST, simulator,
 dashboard polling. Nothing beyond that.
 
-Status: PLANNED. BQ-1 approved (D-1). Waiting for final plan approval
-before building (see docs/BLOCKED.md).
+Status: IN PROGRESS. Plan approved by the student on 2026-10-31, with
+NQ-9 kept. BQ-1 approved (D-1).
 
 ### Step 1: existing repository assessment
 
