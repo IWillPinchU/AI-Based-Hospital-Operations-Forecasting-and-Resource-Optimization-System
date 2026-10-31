@@ -151,3 +151,46 @@ The frontend presents the system's outputs.
 
 - **Frontend:** Next.js, TypeScript, Tailwind CSS
 - **Backend API:** Python, FastAPI
+
+## 10. How to Run
+
+### 1. Install Backend Dependencies
+Ensure the Python virtual environment (`.venv`) is activated or use its interpreter directly:
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+```
+
+### 2. Generate Synthetic Operational Data
+Generate the baseline dataset (`hospital_operations_synthetic.csv`) and surge demo dataset (`surge_demo.csv`):
+```powershell
+.\.venv\Scripts\python.exe backend/scripts/generate_synthetic_data.py
+```
+
+### 3. Train the Forecasting Model
+Extract lag features and train the HistGradientBoosting regressor:
+```powershell
+.\.venv\Scripts\python.exe backend/scripts/train_forecaster.py
+```
+This produces `backend/models/ed_forecaster.joblib`.
+
+### 4. Start the Backend API
+Run the FastAPI development server:
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --port 8000 --reload
+```
+The API documentation is available at `http://localhost:8000/docs`.
+
+### 5. Install and Start the Frontend
+In a separate terminal window:
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+The Next.js dashboard will be served at `http://localhost:3000`.
+
+### 6. Upload Operational CSV
+1. Open `http://localhost:3000` in your browser.
+2. Click **Upload Operational CSV** in the top navigation bar.
+3. Select `hospital_operations_synthetic.csv` (or `surge_demo.csv` to demonstrate critical surge triage and nurse redeployment).
+4. Click **Upload & Process**. The dashboard will ingest the records into SQLite and immediately display live telemetry, next-hour arrival forecasts, anomaly classifications, and advisory staffing recommendations.

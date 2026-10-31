@@ -423,7 +423,7 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
     ├── eslint.config.mjs                       # ESLint configuration
     └── src/
         ├── app/
-        │   ├── layout.tsx                      # Root layout with Chivo & Atkinson fonts & advisory banner
+        │   ├── layout.tsx                      # Root layout with Chivo & Atkinson fonts; renders persistent advisory banner (REQ-011)
         │   ├── page.tsx                        # Main operational dashboard page
         │   └── globals.css                     # Tailwind CSS v4 imports & clinical theme tokens
         ├── components/
@@ -479,10 +479,10 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 - `frontend/next.config.ts`: Next.js TypeScript configuration.
 - `frontend/eslint.config.mjs`: ESLint flat configuration.
 - `frontend/src/app/globals.css`: Tailwind CSS v4 imports and clinical light theme tokens (`#F3F6F4` canvas, `#122B32` ink, `#0A6E73` signage teal, accessible triage colors).
-- `frontend/src/app/layout.tsx`: Root layout with self-hosted Chivo and Atkinson Hyperlegible fonts and persistent advisory header banner.
+- `frontend/src/app/layout.tsx`: Root layout with self-hosted Chivo and Atkinson Hyperlegible fonts; renders the persistent clinical decision-support advisory header banner (REQ-011).
 - `frontend/src/app/page.tsx`: Main dashboard page coordinating data fetching across the 4 layers with isolated error resilience.
 - `frontend/src/components/Navbar.tsx`: Header bar displaying project title, formatted UTC timestamp, and ingestion modal trigger.
-- `frontend/src/components/IngestionModal.tsx`: Modal dialog for uploading operational CSV files with inserted/updated feedback.
+- `frontend/src/components/IngestionModal.tsx`: Modal dialog for uploading operational CSV files with inserted/updated counts.
 - `frontend/src/components/CurrentStateStrip.tsx`: Clinical vitals telemetry strip displaying arrivals, patients, beds, ICU occupancy, and staff ratios.
 - `frontend/src/components/ForecastCard.tsx`: Next-hour arrival forecast KPI and Recharts 24-hour historical trajectory with projected step.
 - `frontend/src/components/AnomalySign.tsx`: Hospital wayfinding sign with triage severity (normal, surge, drop) and clinical explanation.
@@ -546,7 +546,7 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 | **REQ-008** | `test_synthetic_data_generation` | `tests/test_layers.py` | Verify generator outputs non-empty CSV with all 7 columns. |
 | **REQ-009** | `test_model_training_artifact` | `tests/test_layers.py` | Verify `train_forecaster.py` creates loadable `.joblib` model artifact. |
 | **REQ-010** | `manual_dashboard_verification` | `frontend / browser` | Manual verification: Upload CSV via modal and confirm all four layer cards and the persistent clinical advisory banner render properly. |
-| **REQ-011** | `test_advisory_disclaimer_presence` | `tests/test_api.py` | Assert `GET /recommendations` response includes mandatory advisory disclaimer string. |
+| **REQ-011** | `test_advisory_disclaimer_presence` & `banner_render` | `tests/test_api.py`, `frontend/src/app/layout.tsx` | Assert `GET /recommendations` response includes mandatory advisory disclaimer string; frontend `layout.tsx` renders persistent advisory banner. |
 
 ---
 
@@ -576,4 +576,4 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 - [x] All blocking questions resolved; provisional placeholders clearly flagged and isolated in `app/config.py`.
 - [x] No application code, scaffold, or packages written during this planning phase.
 
-**Architect Status:** **PROVISIONAL** (Pending implementation and verification of simplified academic architecture).
+**Architect Status:** **PROVISIONAL** (System implemented and verified — Milestones 1–5 complete, all backend tests passing; provisional status maintained because staffing and bed thresholds are placeholders and operational data is synthetic).
