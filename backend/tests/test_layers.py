@@ -154,6 +154,10 @@ def test_layer_2_forecast_inference_success(db_session, client):
     assert forecast.expected_net_change == round(forecast.predicted_ed_arrivals - forecast.current_ed_arrivals, 1)
     assert forecast.target_timestamp == base_time + timedelta(hours=26)
     assert forecast.model_metadata.model_name == "HistGradientBoostingRegressor"
+    # Verify recent_arrivals: exactly 24 observed hourly values, oldest first
+    assert len(forecast.recent_arrivals) == 24
+    assert forecast.recent_arrivals[0].timestamp < forecast.recent_arrivals[-1].timestamp
+    assert forecast.recent_arrivals[-1].arrivals == forecast.current_ed_arrivals
 
     # API endpoint call via client
     response = client.get("/api/v1/forecast")
@@ -163,6 +167,8 @@ def test_layer_2_forecast_inference_success(db_session, client):
     assert data["current_ed_arrivals"] == 20 + 25
     assert data["predicted_ed_arrivals"] == forecast.predicted_ed_arrivals
     assert data["expected_net_change"] == forecast.expected_net_change
+    assert len(data["recent_arrivals"]) == 24
+    assert data["recent_arrivals"][0]["timestamp"].endswith("Z")
 
 
 def test_layer_3_anomaly_no_data_and_zero_baseline(db_session):

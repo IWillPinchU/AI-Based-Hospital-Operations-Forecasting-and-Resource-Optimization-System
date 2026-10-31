@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #122b32;
+  --ink-muted: #4a6369;
+  --signage-teal: #0a6e73;
+  --signage-teal-hover: #08565a;
+  --border-line: #d5dfdb;
+  --border-subtle: #e2ebe7;
+
+  /* Clinical Triage Tokens */
+  --triage-red-bg: #fff5f5;
+  --triage-red-border: #f87171;
+  --triage-red-text: #b91c1c;
+
+  --triage-amber-bg: #fffbeb;
+  --triage-amber-border: #d9730d;
+  --triage-amber-text: #92400e; /* Darker amber passing WCAG AA/AAA contrast against light backgrounds */
+
+  --triage-green-bg: #f0fdf4;
+  --triage-green-border: #4ade80;
+  --triage-green-text: #166534;
+
+  --triage-slate-bg: #f8fafc;
+  --triage-slate-border: #94a3b8;
+  --triage-slate-text: #334155;
+}
+
+/* Light theme strictly enforced (no dark backgrounds) */
+html,
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-atkinson), system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures for numbers and stats */
+.tabular-numbers {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Heading font helper */
+.font-heading {
+  font-family: var(--font-chivo), sans-serif;
+}
+
+/* Accessible focus outline */
+*:focus-visible {
+  outline: 2px solid var(--signage-teal);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

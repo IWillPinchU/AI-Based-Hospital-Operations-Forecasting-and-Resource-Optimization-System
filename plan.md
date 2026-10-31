@@ -228,6 +228,16 @@ A single table created at application startup with SQLAlchemy `Base.metadata.cre
   "current_ed_arrivals": 57,
   "predicted_ed_arrivals": 61.0,
   "expected_net_change": 4.0,
+  "recent_arrivals": [
+    {
+      "timestamp": "2026-10-28T15:00:00Z",
+      "arrivals": 42
+    },
+    {
+      "timestamp": "2026-10-29T14:00:00Z",
+      "arrivals": 57
+    }
+  ],
   "model_metadata": {
     "model_name": "HistGradientBoostingRegressor",
     "version": "1.0.0"
@@ -406,26 +416,26 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 │       └── test_api.py                         # Integration tests for all 5 HTTP endpoints
 └── frontend/
     ├── .env.example                            # NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-    ├── package.json                            # Next.js, React, Tailwind CSS, Lucide, Recharts
-    ├── tsconfig.json
-    ├── tailwind.config.js
-    ├── postcss.config.js
-    ├── next.config.js
+    ├── .env.local                              # Local environment variables
+    ├── package.json                            # Next.js 16, React 19, Tailwind CSS v4, Lucide, Recharts
+    ├── tsconfig.json                           # TypeScript configuration with @/* path alias
+    ├── next.config.ts                          # Next.js configuration
+    ├── eslint.config.mjs                       # ESLint configuration
     └── src/
         ├── app/
-        │   ├── layout.tsx                      # Root layout with fonts & advisory banner
+        │   ├── layout.tsx                      # Root layout with Chivo & Atkinson fonts & advisory banner
         │   ├── page.tsx                        # Main operational dashboard page
-        │   └── globals.css
+        │   └── globals.css                     # Tailwind CSS v4 imports & clinical theme tokens
         ├── components/
         │   ├── Navbar.tsx                      # Top bar with title & upload button
         │   ├── IngestionModal.tsx              # CSV upload modal
-        │   ├── CurrentStateCards.tsx           # Layer 1 KPI metrics display
-        │   ├── ForecastCard.tsx                # Layer 2 forecast & trend chart
-        │   ├── AnomalyCard.tsx                 # Layer 3 anomaly gauge & badge
-        │   ├── RecommendationList.tsx          # Layer 4 advisory cards
-        │   └── AdvisoryBanner.tsx              # Prominent clinical decision-support disclaimer
+        │   ├── CurrentStateStrip.tsx           # Clinical vitals telemetry strip
+        │   ├── ForecastCard.tsx                # Next-hour arrival forecast & 24h trajectory chart
+        │   ├── AnomalySign.tsx                 # Hospital wayfinding sign with triage severity
+        │   └── RecommendationList.tsx          # Prioritized decision-support action queue
         └── lib/
             ├── api.ts                          # Fetch client configured via NEXT_PUBLIC_API_BASE_URL
+            ├── formatters.ts                   # UTC date/time and category name formatters
             └── types.ts                        # TypeScript interfaces matching backend DTOs
 ```
 
@@ -435,14 +445,14 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 
 ### 11.1 Backend Core Application Files
 - `backend/app/main.py`: Creates FastAPI application, configures CORS middleware, mounts routes from `app/routes.py`, and initializes database tables on startup via `Base.metadata.create_all(bind=engine)`.
-- `backend/app/config.py`: Reads `DATABASE_URL` and `CORS_ORIGINS`, and defines all provisional placeholder constraints and anomaly thresholds (`TARGET_PATIENTS_PER_NURSE = 4.0`, `MAX_NURSES_REDEPLOYABLE = 4`, `FORECAST_WEIGHT = 0.5`, `MIN_AVAILABLE_BEDS_THRESHOLD = 50`, `ICU_OCCUPANCY_WARNING_PCT = 88.0`, `ANOMALY_CRITICAL_SURGE_PCT = 30.0`, `ANOMALY_MODERATE_SURGE_PCT = 15.0`, `ANOMALY_MODERATE_DROP_PCT = -15.0`, `ANOMALY_UNUSUAL_DROP_PCT = -30.0`).
+- `backend/app/config.py`: Reads `DATABASE_URL` and `CORS_ORIGINS`, and defines all provisional placeholder constraints, anomaly thresholds, and the advisory notice (`TARGET_PATIENTS_PER_NURSE = 4.0`, `MAX_NURSES_REDEPLOYABLE = 4`, `FORECAST_WEIGHT = 0.5`, `MIN_AVAILABLE_BEDS_THRESHOLD = 50`, `ICU_OCCUPANCY_WARNING_PCT = 88.0`, `ANOMALY_CRITICAL_SURGE_PCT = 30.0`, `ANOMALY_MODERATE_SURGE_PCT = 15.0`, `ANOMALY_MODERATE_DROP_PCT = -15.0`, `ANOMALY_UNUSUAL_DROP_PCT = -30.0`, `ADVISORY_DISCLAIMER`).
 - `backend/app/database.py`: Sets up SQLAlchemy `engine`, `SessionLocal`, base declarative class `Base`, and the `OperationalMetrics` table model.
-- `backend/app/schemas.py`: Contains all Pydantic schemas: `OperationalRowSchema`, `IngestionResponse`, `CurrentStateResponse`, `ForecastResponse`, `AnomalyResponse`, and `RecommendationResponse`.
-- `backend/app/ingestion.py`: Reads raw CSV files with Pandas, validates columns and positive ranges, converts timestamps to UTC, and bulk-inserts rows into SQLite.
+- `backend/app/schemas.py`: Contains all Pydantic schemas: `OperationalRowSchema`, `IngestionResponse`, `CurrentStateResponse`, `ForecastResponse` (including `HourlyArrival` and `recent_arrivals`), `AnomalyResponse`, and `RecommendationResponse`.
+- `backend/app/ingestion.py`: Reads raw CSV files with Pandas, validates columns and positive ranges, converts timestamps to UTC, and performs idempotent upsert into SQLite.
 - `backend/app/state.py`: Implements Layer 1 by fetching the latest row from `operational_metrics` and calculating patient-to-nurse and patient-to-doctor ratios.
-- `backend/app/forecast.py`: Implements Layer 2 by verifying `ed_forecaster.joblib` exists, fetching the latest 25 rows for lags ($t, t-1, t-24$), and predicting next-hour arrivals.
+- `backend/app/forecast.py`: Implements Layer 2 by verifying `ed_forecaster.joblib` exists, fetching the latest 25 rows for lags ($t, t-1, t-24$), returning the last 24 observed hourly arrivals (`recent_arrivals`, oldest first), and predicting next-hour arrivals.
 - `backend/app/anomaly.py`: Implements Layer 3 by computing the historical mean baseline for the matching hour-of-week and classifying deviation percentage into 5 severity categories using named thresholds from `app/config.py`.
-- `backend/app/optimizer.py`: Implements Layer 4 by evaluating required nurse counts against target ratios, calculating staffing deltas capped at redeployment limits, and checking bed thresholds.
+- `backend/app/optimizer.py`: Implements Layer 4 by evaluating required nurse counts against target ratios, calculating staffing deltas capped at redeployment limits, and checking bed/ICU thresholds.
 - `backend/app/routes.py`: Defines the 5 endpoints (`POST /api/v1/ingest/csv`, `GET /api/v1/current-state`, `GET /api/v1/forecast`, `GET /api/v1/anomalies`, `GET /api/v1/recommendations`).
 
 ### 11.2 Backend Scripts & Artifacts
@@ -453,7 +463,7 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 ### 11.3 Backend Test Suite
 - `backend/tests/conftest.py`: Pytest fixtures creating a temporary SQLite test database and sample operational records.
 - `backend/tests/test_ingest.py`: Tests for CSV ingestion, schema validation, range checks, and malformed file rejections.
-- `backend/tests/test_layers.py`: Unit tests for Layer 1 state calculations, Layer 2 lag extraction & inference, Layer 3 anomaly classifications (including zero-baseline HTTP 400 handling), and Layer 4 optimization rules.
+- `backend/tests/test_layers.py`: Unit tests for Layer 1 state calculations, Layer 2 lag extraction & inference (including `recent_arrivals`), Layer 3 anomaly classifications (including zero-baseline HTTP 400 handling), and Layer 4 optimization rules.
 - `backend/tests/test_api.py`: End-to-end integration tests verifying all 5 endpoints using FastAPI's `TestClient`.
 
 ### 11.4 Backend Config & Environment Files
@@ -463,22 +473,22 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 
 ### 11.5 Frontend Application Files
 - `frontend/.env.example`: Declares `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`.
-- `frontend/package.json`: Frontend package manifest with Next.js, React, Tailwind CSS, Lucide icons, and Recharts.
-- `frontend/tsconfig.json`: TypeScript configuration.
-- `frontend/tailwind.config.js`: Tailwind CSS theme configuration with clinical alert colors.
-- `frontend/postcss.config.js`: PostCSS configuration.
-- `frontend/next.config.js`: Next.js configuration.
-- `frontend/src/app/layout.tsx`: Root layout with font styles and the persistent advisory header banner.
-- `frontend/src/app/page.tsx`: Main dashboard page coordinating data fetching across the 4 layers.
-- `frontend/src/app/globals.css`: Tailwind root styles and utility classes.
-- `frontend/src/components/Navbar.tsx`: Header bar displaying project title and ingestion modal trigger.
-- `frontend/src/components/IngestionModal.tsx`: Modal dialog for uploading operational CSV files.
-- `frontend/src/components/CurrentStateCards.tsx`: 4 metric cards for arrivals, patients, beds, and ICU occupancy.
-- `frontend/src/components/ForecastCard.tsx`: Forecast KPI card with 24-hour historical trend chart.
-- `frontend/src/components/AnomalyCard.tsx`: Anomaly alert card displaying severity badge, baseline, and deviation %.
-- `frontend/src/components/RecommendationList.tsx`: List of advisory staffing and bed actions.
-- `frontend/src/components/AdvisoryBanner.tsx`: Prominent clinical advisory disclaimer.
+- `frontend/.env.local`: Local environment variable override.
+- `frontend/package.json`: Frontend package manifest with Next.js 16, React 19, Tailwind CSS v4, Lucide icons, and Recharts.
+- `frontend/tsconfig.json`: TypeScript configuration with `@/*` path alias.
+- `frontend/next.config.ts`: Next.js TypeScript configuration.
+- `frontend/eslint.config.mjs`: ESLint flat configuration.
+- `frontend/src/app/globals.css`: Tailwind CSS v4 imports and clinical light theme tokens (`#F3F6F4` canvas, `#122B32` ink, `#0A6E73` signage teal, accessible triage colors).
+- `frontend/src/app/layout.tsx`: Root layout with self-hosted Chivo and Atkinson Hyperlegible fonts and persistent advisory header banner.
+- `frontend/src/app/page.tsx`: Main dashboard page coordinating data fetching across the 4 layers with isolated error resilience.
+- `frontend/src/components/Navbar.tsx`: Header bar displaying project title, formatted UTC timestamp, and ingestion modal trigger.
+- `frontend/src/components/IngestionModal.tsx`: Modal dialog for uploading operational CSV files with inserted/updated feedback.
+- `frontend/src/components/CurrentStateStrip.tsx`: Clinical vitals telemetry strip displaying arrivals, patients, beds, ICU occupancy, and staff ratios.
+- `frontend/src/components/ForecastCard.tsx`: Next-hour arrival forecast KPI and Recharts 24-hour historical trajectory with projected step.
+- `frontend/src/components/AnomalySign.tsx`: Hospital wayfinding sign with triage severity (normal, surge, drop) and clinical explanation.
+- `frontend/src/components/RecommendationList.tsx`: Prioritized decision-support action queue and resource state summary.
 - `frontend/src/lib/api.ts`: Fetch client communicating with backend endpoints.
+- `frontend/src/lib/formatters.ts`: UTC date/time and category name formatting utilities.
 - `frontend/src/lib/types.ts`: TypeScript interfaces matching backend response schemas.
 
 ### 11.6 Root Repository Files
@@ -491,31 +501,31 @@ AI-Based-Hospital-Operations-Forecasting-and-Resource-Optimization-System/
 
 ## 12. Implementation Milestones
 
-### Milestone 1: Database Setup, Synthetic Data & Model Training Script
+### Milestone 1: Database Setup, Synthetic Data & Model Training Script [COMPLETE]
 - **Prerequisites:** Python virtual environment `.venv`.
 - **Components Created:** `backend/app/config.py`, `backend/app/database.py`, `backend/scripts/generate_synthetic_data.py`, `backend/scripts/train_forecaster.py`.
 - **Tests Written:** `backend/tests/conftest.py`, `backend/tests/test_layers.py`.
 - **Done When:** Running `generate_synthetic_data.py` outputs a synthetic CSV, running `train_forecaster.py` creates `backend/models/ed_forecaster.joblib`, and tables are initialized in SQLite.
 
-### Milestone 2: Data Ingestion & Layer 1 (Current State)
+### Milestone 2: Data Ingestion & Layer 1 (Current State) [COMPLETE]
 - **Prerequisites:** Milestone 1 complete.
 - **Components Created:** `backend/app/schemas.py`, `backend/app/ingestion.py`, `backend/app/state.py`, `backend/app/routes.py` (ingest & current-state routes).
 - **Tests Written:** `backend/tests/test_ingest.py`.
 - **Done When:** Uploading a CSV via `POST /api/v1/ingest/csv` saves rows to SQLite, and `GET /api/v1/current-state` returns the latest operational metrics.
 
-### Milestone 3: Predictive Intelligence (Layer 2 Forecast & Layer 3 Anomaly)
+### Milestone 3: Predictive Intelligence (Layer 2 Forecast & Layer 3 Anomaly) [COMPLETE]
 - **Prerequisites:** Milestone 2 complete.
 - **Components Created:** `backend/app/forecast.py`, `backend/app/anomaly.py`, `backend/app/routes.py` (forecast & anomaly routes).
 - **Tests Written:** Unit tests in `backend/tests/test_layers.py`.
 - **Done When:** `GET /api/v1/forecast` returns next-hour predictions using lags, and `GET /api/v1/anomalies` correctly flags simulated arrival surges against the hour-of-week mean.
 
-### Milestone 4: Resource Optimization (Layer 4) & Integration Tests
+### Milestone 4: Resource Optimization (Layer 4) & Integration Tests [COMPLETE]
 - **Prerequisites:** Milestone 3 complete.
 - **Components Created:** `backend/app/optimizer.py`, `backend/app/routes.py` (recommendations route).
 - **Tests Written:** `backend/tests/test_api.py`.
 - **Done When:** `GET /api/v1/recommendations` outputs advisory staffing and bed adjustments, and all backend tests pass via `pytest`.
 
-### Milestone 5: Frontend Dashboard
+### Milestone 5: Frontend Dashboard [COMPLETE]
 - **Prerequisites:** Milestone 4 complete.
 - **Components Created:** Next.js scaffold in `frontend/`, all UI components, and API client.
 - **Done When:** Running `npm run dev` serves the dashboard, allowing CSV upload and displaying live metrics for all four layers.

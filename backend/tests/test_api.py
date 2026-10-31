@@ -47,6 +47,9 @@ def test_e2e_all_five_endpoints_workflow(client):
     forecast_data = r_forecast.json()
     assert forecast_data["target_timestamp"].endswith("Z")
     assert forecast_data["predicted_ed_arrivals"] >= 0
+    assert "recent_arrivals" in forecast_data
+    assert len(forecast_data["recent_arrivals"]) == 24
+    assert forecast_data["recent_arrivals"][0]["timestamp"].endswith("Z")
     assert "model_metadata" in forecast_data
 
     # Endpoint 4: GET /api/v1/anomalies

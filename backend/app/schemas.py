@@ -55,12 +55,25 @@ class ModelMetadata(BaseModel):
     version: str
 
 
+class HourlyArrival(BaseModel):
+    timestamp: datetime
+    arrivals: int
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
+
 class ForecastResponse(BaseModel):
     """Layer 2 Next-Hour Forecast response schema."""
     target_timestamp: datetime
     current_ed_arrivals: int
     predicted_ed_arrivals: float
     expected_net_change: float
+    recent_arrivals: List[HourlyArrival] = []
     model_metadata: ModelMetadata
 
     @field_validator("target_timestamp", mode="before")

@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.database import OperationalMetrics
-from app.schemas import ForecastResponse, ModelMetadata
+from app.schemas import ForecastResponse, HourlyArrival, ModelMetadata
 
 MODEL_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "models", "ed_forecaster.joblib")
@@ -73,11 +73,25 @@ def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastRespon
     else:
         target_ts = target_ts.astimezone(timezone.utc)
 
+    # 24 most recent observed values, oldest first
+    recent_arrivals = [
+        HourlyArrival(
+            timestamp=(
+                r.timestamp.replace(tzinfo=timezone.utc)
+                if r.timestamp.tzinfo is None
+                else r.timestamp.astimezone(timezone.utc)
+            ),
+            arrivals=r.ed_arrivals,
+        )
+        for r in reversed(rows[:24])
+    ]
+
     return ForecastResponse(
         target_timestamp=target_ts,
         current_ed_arrivals=latest.ed_arrivals,
         predicted_ed_arrivals=predicted_ed_arrivals,
         expected_net_change=expected_net_change,
+        recent_arrivals=recent_arrivals,
         model_metadata=ModelMetadata(
             model_name="HistGradientBoostingRegressor",
             version="1.0.0",
