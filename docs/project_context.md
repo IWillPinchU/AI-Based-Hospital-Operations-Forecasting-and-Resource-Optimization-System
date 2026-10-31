@@ -84,8 +84,12 @@ allowed only to perform a gated merge.
 Before every commit, verify the current branch is an exp/ branch.
 
 ## Rules for autonomous runs
-- One milestone per run. Implement the next task, run the full test suite,
-  and commit a checkpoint when it passes. Do not start the next milestone.
+- One expansion step per run. First assess the repository and write that
+  step's plan in expansion_plan.md. Then build its milestones in order:
+  implement the next task, run the full test suite, commit a checkpoint
+  when it passes. After each milestone, run the Merge gate and merge into
+  expansion, then continue with the next milestone of the SAME step.
+  Never start the next step.
 - If tests fail, fix the code, never the tests. Do not edit, weaken,
   skip or delete existing tests. New tests may be added.
 - Never touch hospital_operations.db or any real data file. Tests use
