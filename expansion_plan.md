@@ -11,8 +11,8 @@ Branch: `exp/01-live-ingestion` (from `expansion` at `d721af3`).
 Scope (from the project_context.md roadmap): single-record POST, simulator,
 dashboard polling. Nothing beyond that.
 
-Status: IN PROGRESS. Plan approved by the student on 2026-10-31, with
-NQ-9 kept. BQ-1 approved (D-1).
+Status: COMPLETE (M1, M2, M3 merged into expansion). Plan approved by
+the student on 2026-10-31, with NQ-9 kept. BQ-1 approved (D-1).
 
 ### Step 1: existing repository assessment
 
@@ -332,3 +332,42 @@ live ingestion is what makes gaps likely, the change is one check with no
 new data or settings, and without it the forecast would silently use wrong
 lags. If you prefer the literal scope, drop REQ-015 and its 2 tests and
 leave the gap risk documented under disagreement 3.
+
+### Step 1: As built
+
+Built as planned; all three milestones merged into `expansion` (tags
+merged-01-m1, merged-01-m2, merged-01-m3).
+
+- **M1 (REQ-012, REQ-015):** `POST /api/v1/ingest/record` (`RecordIngestionResponse`,
+  `ingest_single_record`, upsert by UTC instant, 422 on bad input) and the
+  forecast gap check (400 "Data has a gap in the last 25 hours; upload or send
+  the missing hours"). 8 new tests.
+- **M2 (REQ-013):** `backend/scripts/simulate_live_feed.py` (stdlib only),
+  README section "7. Live feed simulator". 4 new tests.
+- **M3 (REQ-014):** `page.tsx` polls every 10 s with no loading skeletons;
+  `Navbar.tsx` shows "Last refreshed" and "Live updates paused. Showing last
+  data." when the backend cannot be reached.
+- Tests: 16 existing (unedited) + 12 new = 28 passed. No new dependencies.
+- NQ-11 check: 200 simulator writes at 0.1 s with 3 concurrent pollers
+  (1036 reads, all HTTP 200): "database is locked" 0 times. SQLite settings
+  unchanged.
+
+**Deviations from the plan**
+1. `test_simulated_record_posts_and_becomes_current` uses 8 days of
+   generated data, not 3 (3 days ends Saturday 23:00 and Sunday 00:00 has no
+   matching hour-of-week row).
+2. `frontend/src/components/ForecastCard.tsx` was changed by two lines (a
+   pre-existing `no-explicit-any` lint error, `null as any` replaced by a
+   nullable number type), approved by the student, so `npm run lint` passes.
+3. `page.tsx`: the unused `isRefreshing` state and unused imports were
+   removed, and the first load runs through `setTimeout(..., 0)` because the
+   lint rule rejects `setState` called directly in an effect.
+4. The student's own commit 3d5d5cb (docs/project_context.md rule wording) is
+   on this branch, so merge gate check 4 showed that diff; accepted by the
+   student. Tag cp-01-m3 predates the lint fix; the final M3 checkpoint is
+   cp-01-m3b (tags are never moved).
+5. The "Last refreshed" chip uses `hidden sm:flex` like "Latest data", so
+   below 640px only the paused message is visible. Layouts below 640px were
+   not checked.
+6. The unedited "Must not change" list was followed otherwise; plan.md and
+   all existing tests are untouched.

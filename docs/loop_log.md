@@ -121,3 +121,7 @@
 - Tag cp-01-m3 already points at f7395c9 (before the fix); tags are never
   moved, so the final M3 checkpoint is tagged cp-01-m3b.
 - Files changed: frontend/src/components/ForecastCard.tsx, docs/loop_log.md.
+
+### 2026-10-31: finish
+
+- As built note added to expansion_plan.md; Step 1 status COMPLETE.
