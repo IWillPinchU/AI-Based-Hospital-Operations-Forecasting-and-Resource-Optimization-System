@@ -154,7 +154,21 @@ The frontend presents the system's outputs.
 
 ## 10. How to Run
 
-### 1. Install Backend Dependencies
+### 🚀 Quick Start with Docker Compose (Recommended)
+
+Run both the backend and frontend together with a single turnkey command. The container self-bootstraps: it automatically generates synthetic datasets if missing, trains/validates the multi-model forecasting zoo, initializes SQLite with persistent volume storage, and seeds telemetry:
+
+```bash
+docker compose up --build
+```
+
+- **Next.js Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **FastAPI Interactive Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **API Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+### Manual / Local Development Run
 Ensure the Python virtual environment (`.venv`) is activated or use its interpreter directly:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt

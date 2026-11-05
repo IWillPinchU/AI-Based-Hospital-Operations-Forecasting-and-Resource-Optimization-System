@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-05T14:19:35.852519+00:00",
+  "timestamp": "2026-11-05T16:08:46.730281+00:00",
   "evaluation_split": "80/20 Temporal Holdout (No leakage)",
   "models": [
     {
@@ -9,7 +9,7 @@
       "library": "scikit-learn",
       "mae": 3.53,
       "rmse": 4.83,
-      "latency_ms": 1.42,
+      "latency_ms": 1.14,
       "description": "Gradient boosted decision trees utilizing lag features (t, t-1, t-24) and diurnal cyclic signals.",
       "is_default": true
     },
@@ -18,9 +18,9 @@
       "name": "PyTorch LSTM",
       "paradigm": "Recurrent Neural Network",
       "library": "PyTorch",
-      "mae": 3.52,
-      "rmse": 4.65,
-      "latency_ms": 0.29,
+      "mae": 3.58,
+      "rmse": 4.74,
+      "latency_ms": 0.35,
       "description": "2-layer LSTM sequence model with recurrent memory tracking the 24-hour sequence trajectory.",
       "is_default": false
     },
@@ -31,7 +31,7 @@
       "library": "statsmodels",
       "mae": 3.51,
       "rmse": 4.66,
-      "latency_ms": 4.85,
+      "latency_ms": 4.44,
       "description": "Exponential Smoothing with additive 24-hour diurnal seasonal decomposition and linear trend.",
       "is_default": false
     },

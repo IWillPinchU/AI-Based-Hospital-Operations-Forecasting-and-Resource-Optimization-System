@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, Float, DateTime, String, Text, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -51,6 +52,13 @@ class AnomalyEvent(Base):
 
 def init_db():
     """Initializes tables in database at startup without migrations."""
+    if DATABASE_URL.startswith("sqlite"):
+        # Ensure target directory exists for SQLite
+        raw_path = DATABASE_URL.replace("sqlite:////", "/").replace("sqlite:///", "")
+        if "/" in raw_path or "\\" in raw_path:
+            db_dir = os.path.dirname(raw_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
     Base.metadata.create_all(bind=engine)
 
 
