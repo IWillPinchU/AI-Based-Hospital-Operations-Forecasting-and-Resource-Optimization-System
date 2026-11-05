@@ -5,6 +5,7 @@ import {
   RecommendationResponse,
   IngestionResponse,
   ModelBenchmarkResponse,
+  HistoricalResponse,
 } from "./types";
 
 const API_BASE =
@@ -84,4 +85,20 @@ export async function uploadOperationalCsv(file: File): Promise<IngestionRespons
     body: formData,
   });
   return handleResponse<IngestionResponse>(res);
+}
+
+export async function fetchHistory(params?: {
+  start?: string;
+  end?: string;
+  limit?: number;
+}): Promise<HistoricalResponse> {
+  const queryParts: string[] = [];
+  if (params?.start) queryParts.push(`start=${encodeURIComponent(params.start)}`);
+  if (params?.end) queryParts.push(`end=${encodeURIComponent(params.end)}`);
+  if (params?.limit) queryParts.push(`limit=${params.limit}`);
+  const qs = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+  const res = await fetch(`${API_BASE}/api/v1/history${qs}`, {
+    cache: "no-store",
+  });
+  return handleResponse<HistoricalResponse>(res);
 }

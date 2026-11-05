@@ -110,3 +110,37 @@ export interface ApiError {
   detail: string;
   status: number;
 }
+
+export interface HistoricalRecord {
+  timestamp: string;
+  ed_arrivals: number;
+  ed_patients: number;
+  available_beds: number;
+  icu_occupancy_pct: number;
+  nurses_available: number;
+  doctors_available: number;
+}
+
+export interface MetricSummary {
+  min: number;
+  max: number;
+  avg: number;
+  total?: number | null;
+}
+
+export interface HistoricalSummary {
+  total_records: number;
+  start_timestamp?: string | null;
+  end_timestamp?: string | null;
+  peak_arrival_timestamp?: string | null;
+  peak_arrivals: number;
+  ed_arrivals: MetricSummary;
+  ed_patients: MetricSummary;
+  available_beds: MetricSummary;
+  icu_occupancy_pct: MetricSummary;
+}
+
+export interface HistoricalResponse {
+  records: HistoricalRecord[];
+  summary?: HistoricalSummary | null;
+}

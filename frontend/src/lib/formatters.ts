@@ -53,6 +53,26 @@ export function formatUtcTime(isoString?: string | null): string {
 }
 
 /**
+ * Formats short date and hour for chart X-axes:
+ * e.g. "Oct 30 14:00"
+ */
+export function formatShortDate(isoString?: string | null): string {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[d.getUTCMonth()];
+    const day = d.getUTCDate();
+    const hours = String(d.getUTCHours()).padStart(2, "0");
+    const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${month} ${day} ${hours}:${minutes}`;
+  } catch {
+    return isoString || "";
+  }
+}
+
+/**
  * Translates backend category enums to friendly hospital names
  * (Sentence case, human-readable).
  */

@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Upload, Clock, RefreshCw, WifiOff } from "lucide-react";
+import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff } from "lucide-react";
 import { formatUtcDateTime } from "@/lib/formatters";
 
 interface NavbarProps {
@@ -9,6 +9,8 @@ interface NavbarProps {
   lastRefreshedAt?: Date | null;
   livePaused?: boolean;
   wsStatus?: "connected" | "connecting" | "disconnected";
+  activeTab?: "live" | "history";
+  onTabChange?: (tab: "live" | "history") => void;
 }
 
 function formatLocalTime(date: Date): string {
@@ -23,6 +25,8 @@ export function Navbar({
   lastRefreshedAt,
   livePaused,
   wsStatus = "disconnected",
+  activeTab = "live",
+  onTabChange,
 }: NavbarProps) {
   return (
     <header className="bg-white border-b border-[#D5DFDB] sticky top-0 z-20">
@@ -41,6 +45,36 @@ export function Navbar({
             </p>
           </div>
         </div>
+
+        {/* Middle Navigation Tabs (Desktop) */}
+        {onTabChange && (
+          <nav className="hidden lg:flex items-center gap-1 bg-[#F3F6F4] p-1 rounded border border-[#D5DFDB] shrink-0">
+            <button
+              type="button"
+              onClick={() => onTabChange("live")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                activeTab === "live"
+                  ? "bg-white text-[#0A6E73] shadow-xs"
+                  : "text-[#4A6369] hover:text-[#122B32]"
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Live Monitor</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onTabChange("history")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
+                activeTab === "history"
+                  ? "bg-white text-[#0A6E73] shadow-xs"
+                  : "text-[#4A6369] hover:text-[#122B32]"
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Historical Analytics</span>
+            </button>
+          </nav>
+        )}
 
         {/* Timestamp and Ingestion Button */}
         <div className="flex items-center gap-3 shrink-0">

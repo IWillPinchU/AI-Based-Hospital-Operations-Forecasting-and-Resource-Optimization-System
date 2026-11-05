@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, UploadFile, File, WebSocket, WebSocketDisconnect
+from datetime import datetime
+from typing import Optional
+from fastapi import APIRouter, Depends, UploadFile, File, WebSocket, WebSocketDisconnect, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -7,6 +9,8 @@ from app.state import get_current_hospital_state
 from app.forecast import get_ed_forecast, get_model_benchmark
 from app.anomaly import detect_ed_anomalies
 from app.optimizer import get_resource_recommendations
+from app.history import get_historical_telemetry
+from app.utils import parse_query_datetime
 from app.websocket_manager import manager
 from app.schemas import (
     IngestionResponse,
@@ -17,6 +21,7 @@ from app.schemas import (
     ModelBenchmarkResponse,
     AnomalyResponse,
     RecommendationResponse,
+    HistoricalResponse,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -101,3 +106,19 @@ def read_ed_anomalies(db: Session = Depends(get_db)):
 def read_resource_recommendations(db: Session = Depends(get_db)):
     """Layer 4: Returns advisory nurse staffing and bed turnover adjustments."""
     return get_resource_recommendations(db)
+
+
+@router.get("/history", response_model=HistoricalResponse, tags=["Historical Analytics"])
+def read_historical_data(
+    start: Optional[str] = Query(None, description="Start UTC timestamp (inclusive, ISO-8601)"),
+    end: Optional[str] = Query(None, description="End UTC timestamp (inclusive, ISO-8601)"),
+    limit: int = Query(720, ge=1, le=2000, description="Max records to return"),
+    db: Session = Depends(get_db),
+):
+    """Returns historical operational records and window aggregates for trends and charts."""
+    try:
+        start_dt = parse_query_datetime(start)
+        end_dt = parse_query_datetime(end)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return get_historical_telemetry(db, start=start_dt, end=end_dt, limit=limit)

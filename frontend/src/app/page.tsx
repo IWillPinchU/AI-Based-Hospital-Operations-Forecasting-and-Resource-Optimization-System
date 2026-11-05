@@ -23,6 +23,7 @@ import { ForecastCard } from "@/components/ForecastCard";
 import { AnomalySign } from "@/components/AnomalySign";
 import { RecommendationList } from "@/components/RecommendationList";
 import { ModelBenchmarkModal } from "@/components/ModelBenchmarkModal";
+import { HistoricalDashboard } from "@/components/HistoricalDashboard";
 import { useTelemetryWebSocket } from "@/lib/useTelemetryWebSocket";
 
 const POLL_INTERVAL_MS = 10000;
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [livePaused, setLivePaused] = useState(false);
+  const [activeTab, setActiveTab] = useState<"live" | "history">("live");
 
   // Layer 1 State
   const [currentState, setCurrentState] = useState<CurrentStateResponse | null>(null);
@@ -221,10 +223,38 @@ export default function DashboardPage() {
         lastRefreshedAt={lastRefreshedAt}
         livePaused={livePaused}
         wsStatus={wsStatus}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       {/* Main Dashboard Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+        {/* Mobile Navigation Tabs */}
+        <div className="flex lg:hidden items-center justify-center p-1 bg-white rounded border border-[#D5DFDB]">
+          <button
+            type="button"
+            onClick={() => setActiveTab("live")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded text-center transition-colors cursor-pointer ${
+              activeTab === "live"
+                ? "bg-[#0A6E73] text-white"
+                : "text-[#4A6369] hover:text-[#122B32]"
+            }`}
+          >
+            Live Monitor
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded text-center transition-colors cursor-pointer ${
+              activeTab === "history"
+                ? "bg-[#0A6E73] text-white"
+                : "text-[#4A6369] hover:text-[#122B32]"
+            }`}
+          >
+            Historical Analytics
+          </button>
+        </div>
+
         {isEmptyDatabase ? (
           /* Empty State Inviting Upload */
           <div className="bg-white border border-[#D5DFDB] rounded p-12 text-center max-w-xl mx-auto my-12">
@@ -246,6 +276,9 @@ export default function DashboardPage() {
               <span>Upload operational CSV</span>
             </button>
           </div>
+        ) : activeTab === "history" ? (
+          /* Historical Analytics View */
+          <HistoricalDashboard />
         ) : (
           <>
             {/* Section 1: Current State Vitals Telemetry */}

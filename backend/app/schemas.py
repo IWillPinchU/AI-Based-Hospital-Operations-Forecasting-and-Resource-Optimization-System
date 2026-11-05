@@ -163,3 +163,52 @@ class RecommendationResponse(BaseModel):
     @classmethod
     def ensure_utc(cls, v):
         return ensure_utc_validator(v)
+
+
+class HistoricalRecord(BaseModel):
+    """Single hourly historical observation."""
+    timestamp: datetime
+    ed_arrivals: int
+    ed_patients: int
+    available_beds: int
+    icu_occupancy_pct: float
+    nurses_available: int
+    doctors_available: int
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        return ensure_utc_validator(v)
+
+
+class MetricSummary(BaseModel):
+    """Statistical summary of a telemetry metric over a time window."""
+    min: float
+    max: float
+    avg: float
+    total: Optional[float] = None
+
+
+class HistoricalSummary(BaseModel):
+    """Aggregated period summary for historical dashboard analysis."""
+    total_records: int
+    start_timestamp: Optional[datetime] = None
+    end_timestamp: Optional[datetime] = None
+    peak_arrival_timestamp: Optional[datetime] = None
+    peak_arrivals: int = 0
+    ed_arrivals: MetricSummary
+    ed_patients: MetricSummary
+    available_beds: MetricSummary
+    icu_occupancy_pct: MetricSummary
+
+    @field_validator("start_timestamp", "end_timestamp", "peak_arrival_timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        return ensure_utc_validator(v) if v is not None else None
+
+
+class HistoricalResponse(BaseModel):
+    """Response payload for historical telemetry queries."""
+    records: List[HistoricalRecord]
+    summary: Optional[HistoricalSummary] = None
+
