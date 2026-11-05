@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 from datetime import datetime, timezone
 from app.database import OperationalMetrics, init_db, engine
+from app.forecast import load_cached_model, clear_model_cache
 from scripts.generate_synthetic_data import generate_synthetic_data, generate_surge_demo_data
 from scripts.train_forecaster import train_forecaster, build_forecasting_dataset
 
@@ -103,6 +104,35 @@ def test_model_training_artifact(tmp_path):
     pred = loaded_model.predict(sample_features)[0]
     assert isinstance(float(pred), float)
     assert pred > 0
+
+
+def test_model_caching_and_invalidation(tmp_path):
+    """Verify that load_cached_model reuses in-memory instance and invalidates on mtime change."""
+    clear_model_cache()
+    model_file = str(tmp_path / "dummy_model.joblib")
+    dummy_payload = {"version": 1}
+    joblib.dump(dummy_payload, model_file)
+
+    # 1. First load populates cache
+    m1 = load_cached_model(model_file)
+    assert m1 == dummy_payload
+
+    # 2. Second load returns identical in-memory instance (no disk read)
+    m2 = load_cached_model(model_file)
+    assert m1 is m2
+
+    # 3. Simulate file update with new mtime
+    import time
+    time.sleep(0.05)
+    updated_payload = {"version": 2}
+    joblib.dump(updated_payload, model_file)
+
+    m3 = load_cached_model(model_file)
+    assert m3 == updated_payload
+    assert m3 is not m1
+
+    # 4. Cache clear works
+    clear_model_cache()
 
 
 def test_layer_2_forecast_missing_model_and_insufficient_lags(db_session, tmp_path):

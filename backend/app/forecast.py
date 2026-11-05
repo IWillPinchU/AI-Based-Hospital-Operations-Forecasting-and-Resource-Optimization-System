@@ -13,6 +13,27 @@ MODEL_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "models", "ed_forecaster.joblib")
 )
 
+# In-memory model cache: maps file path to (mtime, model_instance)
+_model_cache: dict[str, tuple[float, object]] = {}
+
+
+def load_cached_model(path: str):
+    """Loads a serialized model from path, caching in memory until mtime changes."""
+    mtime = os.path.getmtime(path)
+    if path in _model_cache:
+        cached_mtime, model = _model_cache[path]
+        if cached_mtime == mtime:
+            return model
+
+    model = joblib.load(path)
+    _model_cache[path] = (mtime, model)
+    return model
+
+
+def clear_model_cache():
+    """Clears the in-memory model cache (useful in tests or hot-reloading)."""
+    _model_cache.clear()
+
 
 def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastResponse:
     """Layer 2: Predicts next-hour ED arrivals using ed_forecaster.joblib and 25-hour lags."""
@@ -66,7 +87,7 @@ def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastRespon
 
     # 4. Model inference
     try:
-        model = joblib.load(model_path)
+        model = load_cached_model(model_path)
         pred = float(model.predict(features)[0])
     except Exception as e:
         raise HTTPException(
