@@ -9,6 +9,13 @@ import {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+export function getWebSocketUrl(): string {
+  const isSecure = API_BASE.startsWith("https");
+  const protocol = isSecure ? "wss:" : "ws:";
+  const host = API_BASE.replace(/^https?:\/\//, "");
+  return `${protocol}//${host}/api/v1/ws/telemetry`;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let errorDetail = `Request failed with status ${res.status}`;

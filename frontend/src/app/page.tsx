@@ -20,6 +20,7 @@ import { CurrentStateStrip } from "@/components/CurrentStateStrip";
 import { ForecastCard } from "@/components/ForecastCard";
 import { AnomalySign } from "@/components/AnomalySign";
 import { RecommendationList } from "@/components/RecommendationList";
+import { useTelemetryWebSocket } from "@/lib/useTelemetryWebSocket";
 
 const POLL_INTERVAL_MS = 10000;
 
@@ -152,15 +153,28 @@ export default function DashboardPage() {
     );
   }, []);
 
+  // Real-time WebSocket connection
+  const handleWebSocketUpdate = useCallback(() => {
+    // When backend broadcasts a new record or CSV ingestion, refresh instantly
+    refreshDashboard(false);
+  }, [refreshDashboard]);
+
+  const { status: wsStatus } = useTelemetryWebSocket({
+    onDataUpdated: handleWebSocketUpdate,
+    enabled: true,
+  });
+
   useEffect(() => {
     const id = setTimeout(() => refreshDashboard(true), 0);
     return () => clearTimeout(id);
   }, [refreshDashboard]);
 
+  // Fallback background polling (every 30s when WebSocket is active, 10s if disconnected)
   useEffect(() => {
-    const id = setInterval(() => refreshDashboard(false), POLL_INTERVAL_MS);
+    const intervalMs = wsStatus === "connected" ? 30000 : POLL_INTERVAL_MS;
+    const id = setInterval(() => refreshDashboard(false), intervalMs);
     return () => clearInterval(id);
-  }, [refreshDashboard]);
+  }, [refreshDashboard, wsStatus]);
 
   const isEmptyDatabase = !loadingState && !currentState && errorState?.includes("404");
 
@@ -172,6 +186,7 @@ export default function DashboardPage() {
         onOpenUpload={() => setIsModalOpen(true)}
         lastRefreshedAt={lastRefreshedAt}
         livePaused={livePaused}
+        wsStatus={wsStatus}
       />
 
       {/* Main Dashboard Content */}

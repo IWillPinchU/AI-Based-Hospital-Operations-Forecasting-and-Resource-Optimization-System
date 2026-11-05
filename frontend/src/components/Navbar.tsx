@@ -8,6 +8,7 @@ interface NavbarProps {
   isIngesting?: boolean;
   lastRefreshedAt?: Date | null;
   livePaused?: boolean;
+  wsStatus?: "connected" | "connecting" | "disconnected";
 }
 
 function formatLocalTime(date: Date): string {
@@ -21,6 +22,7 @@ export function Navbar({
   isIngesting,
   lastRefreshedAt,
   livePaused,
+  wsStatus = "disconnected",
 }: NavbarProps) {
   return (
     <header className="bg-white border-b border-[#D5DFDB] sticky top-0 z-20">
@@ -42,6 +44,32 @@ export function Navbar({
 
         {/* Timestamp and Ingestion Button */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Real-time Connection Indicator */}
+          <div
+            className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border whitespace-nowrap bg-[#F3F6F4] border-[#D5DFDB]"
+            title={
+              wsStatus === "connected"
+                ? "Connected to real-time WebSocket feed. Updates arrive instantly."
+                : "WebSocket disconnected. Falling back to background polling."
+            }
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                wsStatus === "connected"
+                  ? "bg-emerald-500 animate-pulse"
+                  : wsStatus === "connecting"
+                  ? "bg-amber-400 animate-ping"
+                  : "bg-slate-400"
+              }`}
+            />
+            <span className="font-medium text-[#122B32]">
+              {wsStatus === "connected"
+                ? "Live (WebSocket)"
+                : wsStatus === "connecting"
+                ? "Connecting..."
+                : "Polling (10s)"}
+            </span>
+          </div>
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB] whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-[#0A6E73]" aria-hidden="true" />
             <span>Latest data:</span>

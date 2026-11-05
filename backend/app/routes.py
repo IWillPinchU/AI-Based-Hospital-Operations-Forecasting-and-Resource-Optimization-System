@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -7,6 +7,7 @@ from app.state import get_current_hospital_state
 from app.forecast import get_ed_forecast
 from app.anomaly import detect_ed_anomalies
 from app.optimizer import get_resource_recommendations
+from app.websocket_manager import manager
 from app.schemas import (
     IngestionResponse,
     OperationalRowSchema,
@@ -21,15 +22,51 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.post("/ingest/csv", response_model=IngestionResponse, tags=["Ingestion"])
-def upload_operational_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Ingests a CSV containing hourly operational metrics with idempotent upsert."""
-    return ingest_operational_csv(file, db)
+async def upload_operational_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Ingests a CSV containing hourly operational metrics with idempotent upsert and broadcasts update."""
+    result = ingest_operational_csv(file, db)
+    await manager.broadcast({
+        "event": "data_updated",
+        "source": "csv_upload",
+        "rows_processed": result.rows_processed,
+        "rows_inserted": result.rows_inserted,
+        "rows_updated": result.rows_updated,
+        "latest_timestamp": result.latest_timestamp.isoformat() if result.latest_timestamp else None,
+    })
+    return result
 
 
 @router.post("/ingest/record", response_model=RecordIngestionResponse, tags=["Ingestion"])
-def upload_operational_record(record: OperationalRowSchema, db: Session = Depends(get_db)):
-    """Ingests one live hourly record with upsert on its UTC timestamp."""
-    return ingest_single_record(record, db)
+async def upload_operational_record(record: OperationalRowSchema, db: Session = Depends(get_db)):
+    """Ingests one live hourly record with upsert on its UTC timestamp and broadcasts update."""
+    result = ingest_single_record(record, db)
+    await manager.broadcast({
+        "event": "data_updated",
+        "source": "live_feed",
+        "action": result.action,
+        "timestamp": result.timestamp.isoformat() if result.timestamp else None,
+    })
+    return result
+
+
+@router.websocket("/ws")
+@router.websocket("/ws/telemetry")
+async def websocket_telemetry_endpoint(websocket: WebSocket):
+    """Real-time WebSocket stream broadcasting hospital telemetry updates."""
+    await manager.connect(websocket)
+    try:
+        await websocket.send_json({
+            "event": "connected",
+            "message": "Connected to real-time hospital operations stream",
+        })
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception:
+        manager.disconnect(websocket)
 
 
 @router.get("/current-state", response_model=CurrentStateResponse, tags=["Layer 1"])
