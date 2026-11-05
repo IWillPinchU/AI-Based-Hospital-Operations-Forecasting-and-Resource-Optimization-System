@@ -1,10 +1,11 @@
 import React from "react";
-import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff } from "lucide-react";
+import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff, FileText } from "lucide-react";
 import { formatUtcDateTime } from "@/lib/formatters";
 
 interface NavbarProps {
   latestTimestamp?: string | null;
   onOpenUpload: () => void;
+  onOpenShiftReport?: () => void;
   isIngesting?: boolean;
   lastRefreshedAt?: Date | null;
   livePaused?: boolean;
@@ -21,6 +22,7 @@ function formatLocalTime(date: Date): string {
 export function Navbar({
   latestTimestamp,
   onOpenUpload,
+  onOpenShiftReport,
   isIngesting,
   lastRefreshedAt,
   livePaused,
@@ -120,6 +122,19 @@ export function Navbar({
                 {formatLocalTime(lastRefreshedAt)}
               </span>
             </div>
+          )}
+
+          {onOpenShiftReport && (
+            <button
+              type="button"
+              onClick={onOpenShiftReport}
+              className="inline-flex items-center gap-1.5 bg-white border border-[#D5DFDB] hover:bg-[#F3F6F4] text-[#122B32] text-xs sm:text-sm font-semibold px-3 py-2 rounded transition-colors cursor-pointer"
+              title="Download formal shift handover documentation (PDF or Excel)"
+            >
+              <FileText className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
+              <span className="hidden sm:inline">Shift Report</span>
+              <span className="sm:hidden">Report</span>
+            </button>
           )}
 
           <button

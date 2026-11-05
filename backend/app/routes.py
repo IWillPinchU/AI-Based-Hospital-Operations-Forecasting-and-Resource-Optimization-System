@@ -1,15 +1,21 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, UploadFile, File, WebSocket, WebSocketDisconnect, Query, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, WebSocket, WebSocketDisconnect, Query, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.ingestion import ingest_operational_csv, ingest_single_record
 from app.state import get_current_hospital_state
 from app.forecast import get_ed_forecast, get_model_benchmark
-from app.anomaly import detect_ed_anomalies
+from app.anomaly import (
+    detect_ed_anomalies,
+    get_anomaly_history,
+    resolve_anomaly_event,
+    scan_and_record_all_anomalies,
+)
 from app.optimizer import get_resource_recommendations
 from app.history import get_historical_telemetry
+from app.reports import gather_shift_data, generate_shift_pdf, generate_shift_excel
 from app.utils import parse_query_datetime
 from app.websocket_manager import manager
 from app.schemas import (
@@ -20,6 +26,8 @@ from app.schemas import (
     ForecastResponse,
     ModelBenchmarkResponse,
     AnomalyResponse,
+    AnomalyHistoryResponse,
+    AnomalyResolveResponse,
     RecommendationResponse,
     HistoricalResponse,
 )
@@ -102,6 +110,34 @@ def read_ed_anomalies(db: Session = Depends(get_db)):
     return detect_ed_anomalies(db)
 
 
+@router.get("/anomalies/history", response_model=AnomalyHistoryResponse, tags=["Layer 3"])
+def read_anomaly_history(
+    severity: Optional[str] = Query(None, description="Filter by severity: CRITICAL_SURGE, MODERATE_SURGE, etc."),
+    resolved: Optional[bool] = Query(None, description="Filter by resolved status: true / false"),
+    limit: int = Query(50, ge=1, le=500, description="Max anomaly events to return"),
+    db: Session = Depends(get_db),
+):
+    """Returns persistent anomaly alert history log and aggregate statistics."""
+    return get_anomaly_history(db, severity=severity, resolved=resolved, limit=limit)
+
+
+@router.post("/anomalies/{event_id}/resolve", response_model=AnomalyResolveResponse, tags=["Layer 3"])
+def set_anomaly_resolution(
+    event_id: int,
+    resolved: bool = Query(True, description="Target resolved state"),
+    db: Session = Depends(get_db),
+):
+    """Updates the resolved / acknowledged status of a specific anomaly alert event."""
+    return resolve_anomaly_event(db, event_id=event_id, resolved=resolved)
+
+
+@router.post("/anomalies/scan", tags=["Layer 3"])
+def scan_historical_anomalies(db: Session = Depends(get_db)):
+    """Scans all historical database rows and backfills anomaly events into the persistent log."""
+    count = scan_and_record_all_anomalies(db)
+    return {"status": "success", "new_anomalies_recorded": count}
+
+
 @router.get("/recommendations", response_model=RecommendationResponse, tags=["Layer 4"])
 def read_resource_recommendations(db: Session = Depends(get_db)):
     """Layer 4: Returns advisory nurse staffing and bed turnover adjustments."""
@@ -122,3 +158,35 @@ def read_historical_data(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return get_historical_telemetry(db, start=start_dt, end=end_dt, limit=limit)
+
+
+@router.get("/reports/shift", tags=["Reports"])
+def download_shift_report(
+    hours: int = Query(12, ge=1, le=72, description="Shift window in hours (e.g. 8, 12, 24)"),
+    format: str = Query("pdf", description="Report file format: pdf or excel"),
+    db: Session = Depends(get_db),
+):
+    """Generates and downloads a formatted PDF or Excel operational shift handover report."""
+    fmt = format.lower().strip()
+    if fmt not in ["pdf", "excel", "xlsx"]:
+        raise HTTPException(status_code=400, detail="Invalid format. Supported formats are 'pdf' or 'excel'.")
+
+    data = gather_shift_data(db, hours=hours)
+    ts_str = data["end_time"].strftime("%Y%m%d_%H%M")
+
+    if fmt == "pdf":
+        content = generate_shift_pdf(data)
+        media_type = "application/pdf"
+        filename = f"hospital_shift_report_{hours}h_{ts_str}.pdf"
+    else:
+        content = generate_shift_excel(data)
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename = f"hospital_shift_report_{hours}h_{ts_str}.xlsx"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        },
+    )

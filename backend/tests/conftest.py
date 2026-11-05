@@ -10,7 +10,7 @@ BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from app.database import Base, OperationalMetrics
+from app.database import Base, OperationalMetrics, AnomalyEvent
 
 
 from sqlalchemy.pool import StaticPool
@@ -40,6 +40,7 @@ def db_session(test_engine):
     session.close()
     with test_engine.connect() as conn:
         conn.execute(OperationalMetrics.__table__.delete())
+        conn.execute(AnomalyEvent.__table__.delete())
         conn.commit()
 
 

@@ -82,6 +82,40 @@ export interface AnomalyResponse {
   explanation: string;
 }
 
+export interface AnomalyEventItem {
+  id: number;
+  timestamp: string;
+  observed_value: number;
+  expected_baseline: number;
+  deviation_pct: number;
+  severity: AnomalySeverity;
+  explanation: string;
+  resolved: boolean;
+  resolved_at?: string | null;
+  created_at: string;
+}
+
+export interface AnomalyStatsSummary {
+  total_anomalies: number;
+  critical_surges: number;
+  moderate_surges: number;
+  drops: number;
+  unresolved_count: number;
+  resolved_count: number;
+}
+
+export interface AnomalyHistoryResponse {
+  events: AnomalyEventItem[];
+  summary: AnomalyStatsSummary;
+}
+
+export interface AnomalyResolveResponse {
+  id: number;
+  resolved: boolean;
+  resolved_at?: string | null;
+  status: string;
+}
+
 export interface RecommendationItem {
   id: string;
   category: string;

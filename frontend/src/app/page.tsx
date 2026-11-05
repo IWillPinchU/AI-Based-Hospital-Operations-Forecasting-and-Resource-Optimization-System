@@ -6,6 +6,7 @@ import {
   fetchCurrentState,
   fetchForecast,
   fetchAnomalies,
+  fetchAnomalyHistory,
   fetchRecommendations,
   fetchModelBenchmarks,
 } from "@/lib/api";
@@ -24,6 +25,8 @@ import { AnomalySign } from "@/components/AnomalySign";
 import { RecommendationList } from "@/components/RecommendationList";
 import { ModelBenchmarkModal } from "@/components/ModelBenchmarkModal";
 import { HistoricalDashboard } from "@/components/HistoricalDashboard";
+import { AnomalyAlertLogModal } from "@/components/AnomalyAlertLogModal";
+import { ShiftReportModal } from "@/components/ShiftReportModal";
 import { useTelemetryWebSocket } from "@/lib/useTelemetryWebSocket";
 
 const POLL_INTERVAL_MS = 10000;
@@ -34,6 +37,7 @@ function isNetworkFailure(err: unknown): boolean {
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [livePaused, setLivePaused] = useState(false);
   const [activeTab, setActiveTab] = useState<"live" | "history">("live");
@@ -52,6 +56,8 @@ export default function DashboardPage() {
   const [anomaly, setAnomaly] = useState<AnomalyResponse | null>(null);
   const [loadingAnomaly, setLoadingAnomaly] = useState(true);
   const [errorAnomaly, setErrorAnomaly] = useState<string | null>(null);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [unresolvedAlertsCount, setUnresolvedAlertsCount] = useState<number | undefined>(undefined);
 
   // Layer 4 Recommendations
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
@@ -148,6 +154,13 @@ export default function DashboardPage() {
       (data) => {
         setAnomaly(data);
         setErrorAnomaly(null);
+        fetchAnomalyHistory({ limit: 1 })
+          .then((res) => {
+            if (res && res.summary) {
+              setUnresolvedAlertsCount(res.summary.unresolved_count);
+            }
+          })
+          .catch(() => {});
       },
       (message) => {
         setAnomaly(null);
@@ -220,6 +233,7 @@ export default function DashboardPage() {
       <Navbar
         latestTimestamp={currentState?.timestamp}
         onOpenUpload={() => setIsModalOpen(true)}
+        onOpenShiftReport={() => setIsReportModalOpen(true)}
         lastRefreshedAt={lastRefreshedAt}
         livePaused={livePaused}
         wsStatus={wsStatus}
@@ -309,6 +323,8 @@ export default function DashboardPage() {
                   data={anomaly}
                   isLoading={loadingAnomaly}
                   error={errorAnomaly}
+                  onOpenAlertLog={() => setIsAlertModalOpen(true)}
+                  unresolvedAlertsCount={unresolvedAlertsCount}
                 />
               </div>
             </div>
@@ -342,6 +358,25 @@ export default function DashboardPage() {
           handleSelectModel(id);
           setIsBenchmarkModalOpen(false);
         }}
+      />
+
+      {/* Anomaly History & Operational Alert Log Modal */}
+      <AnomalyAlertLogModal
+        isOpen={isAlertModalOpen}
+        onClose={() => setIsAlertModalOpen(false)}
+        onAlertUpdated={() => {
+          fetchAnomalyHistory({ limit: 1 })
+            .then((res) => {
+              if (res && res.summary) setUnresolvedAlertsCount(res.summary.unresolved_count);
+            })
+            .catch(() => {});
+        }}
+      />
+
+      {/* Shift Handover Report Modal */}
+      <ShiftReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
       />
     </div>
   );

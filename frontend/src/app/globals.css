@@ -64,12 +64,8 @@ body {
   }
 }
 
-/* Recharts Brush slider labels styling and readability */
-.recharts-brush-texts,
-.recharts-brush-texts text {
-  font-size: 10px !important;
-  fill: #4a6369 !important;
-  font-weight: 500 !important;
-  font-family: inherit;
+/* Recharts Brush slider: hide internal SVG text labels to prevent clipping; dynamic HTML indicator below displays the exact scrubbed window cleanly */
+.recharts-brush-texts {
+  display: none !important;
 }
 

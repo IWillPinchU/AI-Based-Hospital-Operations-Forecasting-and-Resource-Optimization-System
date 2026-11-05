@@ -5,6 +5,7 @@ import {
   AlertOctagon,
   TrendingDown,
   Info,
+  Bell,
 } from "lucide-react";
 import { AnomalyResponse, AnomalySeverity } from "@/lib/types";
 
@@ -12,9 +13,17 @@ interface AnomalySignProps {
   data: AnomalyResponse | null;
   isLoading: boolean;
   error: string | null;
+  onOpenAlertLog?: () => void;
+  unresolvedAlertsCount?: number;
 }
 
-export function AnomalySign({ data, isLoading, error }: AnomalySignProps) {
+export function AnomalySign({
+  data,
+  isLoading,
+  error,
+  onOpenAlertLog,
+  unresolvedAlertsCount,
+}: AnomalySignProps) {
   if (isLoading) {
     return (
       <div className="bg-white border border-[#D5DFDB] rounded p-6 h-full flex items-center justify-center text-sm text-[#4A6369]">
@@ -133,13 +142,36 @@ export function AnomalySign({ data, isLoading, error }: AnomalySignProps) {
         </div>
       </div>
 
-      {/* Human-Readable Clinical Explanation */}
-      <div className="mt-6 pt-4 border-t border-[#D5DFDB]">
+      {/* Human-Readable Clinical Explanation & Alert Log Trigger */}
+      <div className="mt-6 pt-4 border-t border-[#D5DFDB] space-y-3">
         <div className="p-3 bg-[#F3F6F4] border border-[#D5DFDB] rounded">
           <p className="text-xs leading-relaxed text-[#122B32]">
             {data.explanation}
           </p>
         </div>
+
+        {onOpenAlertLog && (
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[11px] text-[#4A6369]">
+              {unresolvedAlertsCount != null && unresolvedAlertsCount > 0 ? (
+                <span className="text-[#B91C1C] font-semibold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#B91C1C] animate-pulse" />
+                  {unresolvedAlertsCount} active alert{unresolvedAlertsCount === 1 ? "" : "s"}
+                </span>
+              ) : (
+                "Alert history audit active"
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={onOpenAlertLog}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-[#F3F6F4] hover:bg-[#E5ECE9] text-[#122B32] border border-[#D5DFDB] transition-colors cursor-pointer"
+            >
+              <Bell className="w-3.5 h-3.5 text-[#0A6E73]" />
+              <span>Alert History</span>
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );

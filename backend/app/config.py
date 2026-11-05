@@ -2,7 +2,14 @@ import os
 
 # Environment configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./hospital_operations.db")
-CORS_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+    ).split(",")
+    if origin.strip()
+]
 MAX_CSV_BYTES: int = int(os.getenv("MAX_CSV_BYTES", 50 * 1024 * 1024))  # 50 MB default
 
 # PROVISIONAL PLACEHOLDER CONSTRAINTS - NOT CLINICAL POLICY

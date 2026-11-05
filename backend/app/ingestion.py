@@ -185,6 +185,13 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
 
     db.commit()
 
+    # Automatically scan and record historical anomalies into the persistent alert log
+    try:
+        from app.anomaly import scan_and_record_all_anomalies
+        scan_and_record_all_anomalies(db)
+    except Exception:
+        pass
+
     return IngestionResponse(
         status="success",
         filename=file.filename,

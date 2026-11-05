@@ -135,6 +135,50 @@ class AnomalyResponse(BaseModel):
         return ensure_utc_validator(v)
 
 
+class AnomalyEventSchema(BaseModel):
+    """Schema representing an individual persisted anomaly alert event."""
+    id: int
+    timestamp: datetime
+    observed_value: int
+    expected_baseline: float
+    deviation_pct: float
+    severity: str
+    explanation: str
+    resolved: bool
+    resolved_at: Optional[datetime] = None
+    created_at: datetime
+
+    @field_validator("timestamp", "resolved_at", "created_at", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        return ensure_utc_validator(v) if v is not None else None
+
+
+class AnomalyStatsSummary(BaseModel):
+    """Aggregated metrics across the historical anomaly alert log."""
+    total_anomalies: int
+    critical_surges: int
+    moderate_surges: int
+    drops: int
+    unresolved_count: int
+    resolved_count: int
+
+
+class AnomalyHistoryResponse(BaseModel):
+    """Response containing filtered anomaly events and summary metrics."""
+    events: List[AnomalyEventSchema]
+    summary: AnomalyStatsSummary
+
+
+class AnomalyResolveResponse(BaseModel):
+    """Response returned when an anomaly event resolution status is updated."""
+    id: int
+    resolved: bool
+    resolved_at: Optional[datetime] = None
+    status: str
+
+
+
 class RecommendationItem(BaseModel):
     id: str
     category: str

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import create_engine, Column, Integer, Float, DateTime
+from sqlalchemy import create_engine, Column, Integer, Float, DateTime, String, Text, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import DATABASE_URL
 
@@ -22,6 +22,26 @@ class OperationalMetrics(Base):
     icu_occupancy_pct = Column(Float, nullable=False)
     nurses_available = Column(Integer, nullable=False)  # ED-only active nurses on duty
     doctors_available = Column(Integer, nullable=False)  # ED-only active doctors on duty
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+
+class AnomalyEvent(Base):
+    """Persisted anomaly detection event for historical auditing and alert tracking."""
+    __tablename__ = "anomaly_events"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    timestamp = Column(DateTime(timezone=True), unique=True, index=True, nullable=False)
+    observed_value = Column(Integer, nullable=False)
+    expected_baseline = Column(Float, nullable=False)
+    deviation_pct = Column(Float, nullable=False)
+    severity = Column(String(50), nullable=False)
+    explanation = Column(Text, nullable=False)
+    resolved = Column(Boolean, default=False, nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

@@ -304,41 +304,59 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
 
       {/* Custom Date Pickers (Shown only when preset === 'custom') */}
       {preset === "custom" && (
-        <div className="bg-white border border-[#D5DFDB] rounded p-4 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label htmlFor="custom-start" className="text-xs font-semibold text-[#4A6369]">
-              Start Date/Time (UTC):
-            </label>
-            <input
-              id="custom-start"
-              type="datetime-local"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
-            />
+        <div className="bg-white border border-[#D5DFDB] rounded p-4 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="custom-start" className="text-xs font-semibold text-[#4A6369]">
+                Start Date/Time (UTC):
+              </label>
+              <input
+                id="custom-start"
+                type="datetime-local"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="custom-end" className="text-xs font-semibold text-[#4A6369]">
+                End Date/Time (UTC):
+              </label>
+              <input
+                id="custom-end"
+                type="datetime-local"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleApplyCustom}
+              disabled={Boolean(customStart && customEnd && customStart > customEnd)}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded bg-[#0A6E73] text-white hover:bg-[#08565A] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Apply Filter
+            </button>
+            <span className="text-[11px] text-[#0A6E73] font-medium">
+              💡 All telemetry timestamps in this system are stored and evaluated in UTC.
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="custom-end" className="text-xs font-semibold text-[#4A6369]">
-              End Date/Time (UTC):
-            </label>
-            <input
-              id="custom-end"
-              type="datetime-local"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleApplyCustom}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded bg-[#0A6E73] text-white hover:bg-[#08565A] transition-colors cursor-pointer"
-          >
-            Apply Filter
-          </button>
-          <span className="text-[11px] text-[#0A6E73] font-medium">
-            💡 All hospital telemetry timestamps are stored and displayed in UTC.
-          </span>
+
+          {(customStart || customEnd) && (
+            <div className="flex items-center gap-2 text-xs pt-2 border-t border-[#F3F6F4]">
+              <span className="text-[#4A6369]">Filter target window:</span>
+              <span className="font-mono text-[11px] font-semibold text-[#122B32] bg-[#F3F6F4] px-2.5 py-1 rounded border border-[#D5DFDB]">
+                {customStart ? `${customStart.replace("T", " ")}:00 UTC` : "Earliest"} →{" "}
+                {customEnd ? `${customEnd.replace("T", " ")}:00 UTC` : "Latest"}
+              </span>
+              {customStart && customEnd && customStart > customEnd && (
+                <span className="text-[#B91C1C] text-[11px] font-medium">
+                  ⚠️ Start date/time must be earlier than end date/time.
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -524,7 +542,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
               <div className="h-[380px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   {stream === "arrivals" ? (
-                    <LineChart data={chartData} margin={{ top: 10, right: 115, left: 55, bottom: 20 }}>
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5ECE9" />
                       <XAxis
                         dataKey="formattedTime"
@@ -595,7 +613,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                       />
                     </LineChart>
                   ) : stream === "beds_icu" ? (
-                    <LineChart data={chartData} margin={{ top: 10, right: 70, left: 55, bottom: 20 }}>
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5ECE9" />
                       <XAxis
                         dataKey="formattedTime"
@@ -671,7 +689,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                       />
                     </LineChart>
                   ) : (
-                    <LineChart data={chartData} margin={{ top: 10, right: 115, left: 55, bottom: 20 }}>
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5ECE9" />
                       <XAxis
                         dataKey="formattedTime"

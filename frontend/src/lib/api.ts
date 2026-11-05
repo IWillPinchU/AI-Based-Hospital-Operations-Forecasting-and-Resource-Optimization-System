@@ -2,6 +2,8 @@ import {
   CurrentStateResponse,
   ForecastResponse,
   AnomalyResponse,
+  AnomalyHistoryResponse,
+  AnomalyResolveResponse,
   RecommendationResponse,
   IngestionResponse,
   ModelBenchmarkResponse,
@@ -69,6 +71,39 @@ export async function fetchAnomalies(): Promise<AnomalyResponse> {
   return handleResponse<AnomalyResponse>(res);
 }
 
+export async function fetchAnomalyHistory(params?: {
+  severity?: string;
+  resolved?: boolean;
+  limit?: number;
+}): Promise<AnomalyHistoryResponse> {
+  const queryParts: string[] = [];
+  if (params?.severity) queryParts.push(`severity=${encodeURIComponent(params.severity)}`);
+  if (params?.resolved !== undefined) queryParts.push(`resolved=${params.resolved}`);
+  if (params?.limit) queryParts.push(`limit=${params.limit}`);
+  const qs = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+  const res = await fetch(`${API_BASE}/api/v1/anomalies/history${qs}`, {
+    cache: "no-store",
+  });
+  return handleResponse<AnomalyHistoryResponse>(res);
+}
+
+export async function resolveAnomalyEvent(
+  eventId: number,
+  resolved: boolean = true
+): Promise<AnomalyResolveResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/anomalies/${eventId}/resolve?resolved=${resolved}`, {
+    method: "POST",
+  });
+  return handleResponse<AnomalyResolveResponse>(res);
+}
+
+export async function scanHistoricalAnomalies(): Promise<{ status: string; new_anomalies_recorded: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/anomalies/scan`, {
+    method: "POST",
+  });
+  return handleResponse<{ status: string; new_anomalies_recorded: number }>(res);
+}
+
 export async function fetchRecommendations(): Promise<RecommendationResponse> {
   const res = await fetch(`${API_BASE}/api/v1/recommendations`, {
     cache: "no-store",
@@ -101,4 +136,46 @@ export async function fetchHistory(params?: {
     cache: "no-store",
   });
   return handleResponse<HistoricalResponse>(res);
+}
+
+export async function downloadShiftReport(params: {
+  hours: number;
+  format: "pdf" | "excel";
+}): Promise<void> {
+  const qs = `?hours=${params.hours}&format=${params.format}`;
+  const res = await fetch(`${API_BASE}/api/v1/reports/shift${qs}`, {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    let detail = "Failed to generate shift report.";
+    try {
+      const err = await res.json();
+      detail = err.detail || detail;
+    } catch {
+      // Fallback
+    }
+    throw new Error(detail);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition");
+  let filename = `hospital_shift_report_${params.hours}h_${Date.now()}.${params.format === "pdf" ? "pdf" : "xlsx"}`;
+  if (disposition && disposition.includes("filename=")) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 1000);
 }
