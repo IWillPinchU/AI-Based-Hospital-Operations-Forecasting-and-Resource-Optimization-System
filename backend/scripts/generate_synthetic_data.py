@@ -84,16 +84,46 @@ def generate_synthetic_data(days: int = 30, seed: int = 42) -> pd.DataFrame:
     return df
 
 
+def generate_surge_demo_data(days: int = 14, seed: int = 42) -> pd.DataFrame:
+    """Generates synthetic data with a critical surge and capacity deficit in the latest hours.
+
+    Designed for demonstration:
+    - Layer 1: High patient-to-staff ratio, low beds (< 50), high ICU occupancy (>= 88%)
+    - Layer 2: Elevated next-hour arrival forecast
+    - Layer 3: CRITICAL_SURGE anomaly (deviation >= +30% above historical baseline)
+    - Layer 4: REC-001 (nurse redeployment capped at 4) and REC-002 (bed & ICU alert)
+    """
+    df = generate_synthetic_data(days=days, seed=seed).copy()
+
+    surge_hours = 6
+    if len(df) > surge_hours:
+        for idx in range(len(df) - surge_hours, len(df)):
+            df.loc[idx, "ed_arrivals"] = int(df.loc[idx, "ed_arrivals"] + 30)
+            df.loc[idx, "ed_patients"] = int(df.loc[idx, "ed_patients"] + 25)
+            df.loc[idx, "available_beds"] = max(15, min(42, int(df.loc[idx, "available_beds"]) - 20))
+            df.loc[idx, "icu_occupancy_pct"] = round(min(96.5, max(89.5, float(df.loc[idx, "icu_occupancy_pct"]) + 8.0)), 1)
+            df.loc[idx, "nurses_available"] = min(9, int(df.loc[idx, "nurses_available"]))
+            df.loc[idx, "doctors_available"] = max(3, int(df.loc[idx, "doctors_available"]))
+
+    return df
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate synthetic hospital operations CSV data.")
     parser.add_argument("--days", type=int, default=30, help="Number of operational days to generate (default: 30).")
-    parser.add_argument("--output", type=str, default="hospital_operations_synthetic.csv", help="Output CSV path.")
+    parser.add_argument("--output", type=str, default="hospital_operations_synthetic.csv", help="Output CSV path for baseline dataset.")
+    parser.add_argument("--surge-output", type=str, default="surge_demo.csv", help="Output CSV path for surge demo dataset (default: surge_demo.csv).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     args = parser.parse_args()
 
     df = generate_synthetic_data(days=args.days, seed=args.seed)
     df.to_csv(args.output, index=False)
     print(f"Generated {len(df)} operational records ({args.days} days) saved to '{args.output}'.")
+
+    if args.surge_output:
+        df_surge = generate_surge_demo_data(days=min(args.days, 14), seed=args.seed)
+        df_surge.to_csv(args.surge_output, index=False)
+        print(f"Generated {len(df_surge)} surge demo records saved to '{args.surge_output}'.")
 
 
 if __name__ == "__main__":

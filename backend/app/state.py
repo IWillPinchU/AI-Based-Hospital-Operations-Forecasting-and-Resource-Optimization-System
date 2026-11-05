@@ -1,3 +1,4 @@
+from datetime import timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -24,7 +25,6 @@ def get_current_hospital_state(db: Session) -> CurrentStateResponse:
     nurse_ratio = round(latest.ed_patients / max(latest.nurses_available, 1), 2)
     doctor_ratio = round(latest.ed_patients / max(latest.doctors_available, 1), 2)
 
-    from datetime import timezone
     ts = latest.timestamp.replace(tzinfo=timezone.utc) if latest.timestamp.tzinfo is None else latest.timestamp.astimezone(timezone.utc)
 
     return CurrentStateResponse(

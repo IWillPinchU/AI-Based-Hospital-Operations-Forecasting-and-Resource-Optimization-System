@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 from datetime import datetime, timezone
 from app.database import OperationalMetrics, init_db, engine
-from scripts.generate_synthetic_data import generate_synthetic_data
+from scripts.generate_synthetic_data import generate_synthetic_data, generate_surge_demo_data
 from scripts.train_forecaster import train_forecaster, build_forecasting_dataset
 
 
@@ -57,6 +57,19 @@ def test_synthetic_data_generation(tmp_path):
     assert (df_loaded["doctors_available"] >= 0).all()
     assert (df_loaded["icu_occupancy_pct"] >= 0.0).all()
     assert (df_loaded["icu_occupancy_pct"] <= 100.0).all()
+
+
+def test_surge_demo_data_generation():
+    """Verify surge demo generator produces deterministic output with surge conditions in latest hours."""
+    df_surge = generate_surge_demo_data(days=14, seed=42)
+    assert len(df_surge) == 14 * 24
+
+    latest = df_surge.iloc[-1]
+    assert latest["available_beds"] < 50
+    assert latest["icu_occupancy_pct"] >= 88.0
+    assert latest["ed_arrivals"] >= 50
+    assert (df_surge["ed_arrivals"] >= 0).all()
+    assert (df_surge["icu_occupancy_pct"] <= 100.0).all()
 
 
 def test_model_training_artifact(tmp_path):

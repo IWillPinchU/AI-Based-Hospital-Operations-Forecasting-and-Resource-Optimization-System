@@ -14,6 +14,7 @@ interface IngestionModalProps {
 
 export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IngestionResponse | null>(null);
@@ -21,17 +22,41 @@ export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalPro
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const validateAndSelectFile = (selected: File) => {
     setError(null);
     setResult(null);
+    if (!selected.name.toLowerCase().endsWith(".csv")) {
+      setError("Invalid file format. Please select a .csv operational file.");
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selected = e.target.files[0];
-      if (!selected.name.toLowerCase().endsWith(".csv")) {
-        setError("Invalid file format. Please select a .csv operational file.");
-        setFile(null);
-        return;
-      }
-      setFile(selected);
+      validateAndSelectFile(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      validateAndSelectFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -60,6 +85,7 @@ export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalPro
 
   const handleClose = () => {
     setFile(null);
+    setIsDragging(false);
     setError(null);
     setResult(null);
     onClose();
@@ -106,7 +132,14 @@ export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalPro
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-[#D5DFDB] hover:border-[#0A6E73] bg-[#F3F6F4] p-6 rounded text-center cursor-pointer transition-colors"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed p-6 rounded text-center cursor-pointer transition-colors ${
+              isDragging
+                ? "border-[#0A6E73] bg-[#E8F3F1]"
+                : "border-[#D5DFDB] hover:border-[#0A6E73] bg-[#F3F6F4]"
+            }`}
           >
             <Upload className="w-8 h-8 text-[#0A6E73] mx-auto mb-2" />
             <p className="text-sm font-semibold text-[#122B32]">
