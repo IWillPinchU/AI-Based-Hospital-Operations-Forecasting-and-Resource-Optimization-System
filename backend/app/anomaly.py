@@ -1,6 +1,6 @@
 from datetime import timezone
 from fastapi import HTTPException
-from sqlalchemy import desc
+from sqlalchemy import desc, extract
 from sqlalchemy.orm import Session
 
 from app.config import (
@@ -28,21 +28,21 @@ def detect_ed_anomalies(db: Session) -> AnomalyResponse:
             detail="No operational data available. Please upload an operational CSV first.",
         )
 
-    # 2. Query historical rows excluding the current observation
-    historical_rows = (
-        db.query(OperationalMetrics)
-        .filter(OperationalMetrics.timestamp < latest.timestamp)
-        .all()
-    )
-
-    # 3. Filter for matching hour-of-week bin (day_of_week, hour_of_day)
-    target_weekday = latest.timestamp.weekday()
+    # 2. Query only matching historical hour-of-week rows at the database level
     target_hour = latest.timestamp.hour
+    target_dow = int(latest.timestamp.strftime("%w"))
 
     matching_history = [
-        r.ed_arrivals
-        for r in historical_rows
-        if r.timestamp.weekday() == target_weekday and r.timestamp.hour == target_hour
+        val[0]
+        for val in (
+            db.query(OperationalMetrics.ed_arrivals)
+            .filter(
+                OperationalMetrics.timestamp < latest.timestamp,
+                extract("hour", OperationalMetrics.timestamp) == target_hour,
+                extract("dow", OperationalMetrics.timestamp) == target_dow,
+            )
+            .all()
+        )
     ]
 
     # Failure behavior: If count is 0 or baseline mean is 0, return HTTP 400

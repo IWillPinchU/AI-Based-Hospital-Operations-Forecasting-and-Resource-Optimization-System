@@ -1,5 +1,5 @@
 import io
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -118,6 +118,13 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading uploaded file: {str(e)}")
 
+    MAX_CSV_BYTES = 50 * 1024 * 1024  # 50 MB
+    if len(file_bytes) > MAX_CSV_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="File size exceeds the 50MB limit.",
+        )
+
     df = parse_and_validate_csv(file_bytes)
     df = df.sort_values("timestamp").reset_index(drop=True)
 
@@ -129,10 +136,22 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
     def normalize_utc(dt: datetime) -> datetime:
         return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
-    # Query all existing records to do efficient idempotent upsert
+    # Scoped query: Query only existing records that overlap with the uploaded time range
+    csv_timestamps = [row["timestamp"].to_pydatetime() for _, row in df.iterrows()]
+    min_ts = min(csv_timestamps)
+    max_ts = max(csv_timestamps)
+    buffer = timedelta(days=1)
+    min_bound = (min_ts - buffer).replace(tzinfo=None) if min_ts.tzinfo else (min_ts - buffer)
+    max_bound = (max_ts + buffer).replace(tzinfo=None) if max_ts.tzinfo else (max_ts + buffer)
+
     existing_records = {
         normalize_utc(rec.timestamp): rec
-        for rec in db.query(OperationalMetrics).all()
+        for rec in db.query(OperationalMetrics)
+        .filter(
+            OperationalMetrics.timestamp >= min_bound,
+            OperationalMetrics.timestamp <= max_bound,
+        )
+        .all()
     }
 
     latest_ts = None
