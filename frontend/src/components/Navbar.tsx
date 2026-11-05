@@ -1,6 +1,8 @@
 import React from "react";
-import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff, FileText } from "lucide-react";
+import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff, FileText, Sun, Moon } from "lucide-react";
 import { formatUtcDateTime } from "@/lib/formatters";
+import { useTheme } from "@/lib/ThemeContext";
+import { useIsMounted } from "@/lib/useIsMounted";
 
 interface NavbarProps {
   latestTimestamp?: string | null;
@@ -30,31 +32,19 @@ export function Navbar({
   activeTab = "live",
   onTabChange,
 }: NavbarProps) {
+  const { theme, toggleTheme } = useTheme();
+  const mounted = useIsMounted();
+
   return (
     <header className="bg-white border-b border-[#D5DFDB] sticky top-0 z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Title and Hospital Signage Icon */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded bg-[#0A6E73] text-white flex items-center justify-center shrink-0">
-            <Activity className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-heading text-lg sm:text-xl font-bold text-[#122B32] truncate">
-              Hospital Operations Forecasting and Resource Optimization System
-            </h1>
-            <p className="text-xs text-[#4A6369] truncate">
-              Emergency department decision support and capacity telemetry
-            </p>
-          </div>
-        </div>
-
-        {/* Middle Navigation Tabs (Desktop) */}
+        {/* Left: Navigation Switcher Tabs */}
         {onTabChange && (
-          <nav className="hidden lg:flex items-center gap-1 bg-[#F3F6F4] p-1 rounded border border-[#D5DFDB] shrink-0">
+          <nav className="flex items-center gap-1 bg-[#F3F6F4] p-1 rounded border border-[#D5DFDB] shrink-0">
             <button
               type="button"
               onClick={() => onTabChange("live")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
                 activeTab === "live"
                   ? "bg-white text-[#0A6E73] shadow-xs"
                   : "text-[#4A6369] hover:text-[#122B32]"
@@ -66,7 +56,7 @@ export function Navbar({
             <button
               type="button"
               onClick={() => onTabChange("history")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded transition-colors cursor-pointer ${
                 activeTab === "history"
                   ? "bg-white text-[#0A6E73] shadow-xs"
                   : "text-[#4A6369] hover:text-[#122B32]"
@@ -78,8 +68,8 @@ export function Navbar({
           </nav>
         )}
 
-        {/* Timestamp and Ingestion Button */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: Timestamp and Action Buttons */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Real-time Connection Indicator */}
           <div
             className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border whitespace-nowrap bg-[#F3F6F4] border-[#D5DFDB]"
@@ -106,6 +96,7 @@ export function Navbar({
                 : "Polling (10s)"}
             </span>
           </div>
+
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#4A6369] bg-[#F3F6F4] px-3 py-1.5 rounded border border-[#D5DFDB] whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-[#0A6E73]" aria-hidden="true" />
             <span>Latest data:</span>
@@ -128,7 +119,7 @@ export function Navbar({
             <button
               type="button"
               onClick={onOpenShiftReport}
-              className="inline-flex items-center gap-1.5 bg-white border border-[#D5DFDB] hover:bg-[#F3F6F4] text-[#122B32] text-xs sm:text-sm font-semibold px-3 py-2 rounded transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-white border border-[#D5DFDB] hover:bg-[#F3F6F4] text-[#122B32] text-xs sm:text-sm font-semibold px-2.5 sm:px-3 py-2 rounded transition-colors cursor-pointer"
               title="Download formal shift handover documentation (PDF or Excel)"
             >
               <FileText className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
@@ -137,6 +128,22 @@ export function Navbar({
             </button>
           )}
 
+          {/* Dark / Light Mode Switcher */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={mounted && theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={mounted && theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            suppressHydrationWarning
+            className="inline-flex items-center justify-center w-9 h-9 bg-white border border-[#D5DFDB] hover:bg-[#F3F6F4] text-[#122B32] rounded transition-colors cursor-pointer shrink-0"
+          >
+            {mounted && theme === "dark" ? (
+              <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
+            ) : (
+              <Moon className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
+            )}
+          </button>
+
           <button
             type="button"
             onClick={onOpenUpload}
@@ -144,7 +151,9 @@ export function Navbar({
             className="inline-flex items-center gap-2 bg-[#0A6E73] hover:bg-[#08565A] text-white text-sm font-semibold px-3.5 py-2 rounded transition-colors shadow-none focus-visible:ring-2 focus-visible:ring-[#0A6E73] cursor-pointer disabled:opacity-60"
           >
             <Upload className="w-4 h-4" aria-hidden="true" />
-            <span>Upload CSV</span>
+            <span className="hidden sm:inline">Upload CSV</span>
+            <span className="sm:inline hidden"></span>
+            <span className="sm:hidden">Upload</span>
           </button>
         </div>
       </div>

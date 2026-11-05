@@ -3,6 +3,8 @@
 :root {
   --canvas: #f3f6f4;
   --surface: #ffffff;
+  --surface-hover: #f3f6f4;
+  --surface-raised: #ffffff;
   --ink: #122b32;
   --ink-muted: #4a6369;
   --signage-teal: #0a6e73;
@@ -10,14 +12,14 @@
   --border-line: #d5dfdb;
   --border-subtle: #e2ebe7;
 
-  /* Clinical Triage Tokens */
+  /* Clinical Triage Tokens (Light Mode) */
   --triage-red-bg: #fff5f5;
   --triage-red-border: #f87171;
   --triage-red-text: #b91c1c;
 
   --triage-amber-bg: #fffbeb;
   --triage-amber-border: #d9730d;
-  --triage-amber-text: #92400e; /* Darker amber passing WCAG AA/AAA contrast against light backgrounds */
+  --triage-amber-text: #92400e;
 
   --triage-green-bg: #f0fdf4;
   --triage-green-border: #4ade80;
@@ -26,9 +28,44 @@
   --triage-slate-bg: #f8fafc;
   --triage-slate-border: #94a3b8;
   --triage-slate-text: #334155;
+
+  color-scheme: light;
 }
 
-/* Light theme strictly enforced (no dark backgrounds) */
+html.dark,
+.dark {
+  --canvas: #0c1417;
+  --surface: #142024;
+  --surface-hover: #1a2a30;
+  --surface-raised: #1e3037;
+  --ink: #e6f1f2;
+  --ink-muted: #8ea7ad;
+  --signage-teal: #14b8a6;
+  --signage-teal-hover: #2dd4bf;
+  --border-line: #22373f;
+  --border-subtle: #192a30;
+
+  /* Clinical Triage Tokens (Dark Mode) */
+  --triage-red-bg: #291215;
+  --triage-red-border: #7f1d1d;
+  --triage-red-text: #fca5a5;
+
+  --triage-amber-bg: #26190b;
+  --triage-amber-border: #78350f;
+  --triage-amber-text: #fde047;
+
+  --triage-green-bg: #092416;
+  --triage-green-border: #14532d;
+  --triage-green-text: #86efac;
+
+  --triage-slate-bg: #142126;
+  --triage-slate-border: #2e444d;
+  --triage-slate-text: #cbd5e1;
+
+  color-scheme: dark;
+}
+
+/* Base Document Styles */
 html,
 body {
   background-color: var(--canvas);
@@ -64,8 +101,149 @@ body {
   }
 }
 
-/* Recharts Brush slider: hide internal SVG text labels to prevent clipping; dynamic HTML indicator below displays the exact scrubbed window cleanly */
+/* Recharts Brush slider: hide internal SVG text labels to prevent clipping */
 .recharts-brush-texts {
   display: none !important;
 }
 
+/* ========================================================
+   DARK THEME COMPONENT & UTILITY AUTOMATIC MAPPING
+   ======================================================== */
+
+.dark .bg-white {
+  background-color: var(--surface) !important;
+}
+
+.dark .bg-\[\#F3F6F4\] {
+  background-color: var(--canvas) !important;
+}
+
+.dark .bg-\[\#F8FAFC\],
+.dark .bg-\[\#FDFEFE\] {
+  background-color: var(--triage-slate-bg) !important;
+}
+
+.dark .bg-\[\#E5ECE9\] {
+  background-color: var(--surface-hover) !important;
+}
+
+.dark .text-\[\#122B32\] {
+  color: var(--ink) !important;
+}
+
+.dark .text-\[\#4A6369\] {
+  color: var(--ink-muted) !important;
+}
+
+.dark .text-\[\#334155\] {
+  color: var(--triage-slate-text) !important;
+}
+
+.dark .text-\[\#1E293B\] {
+  color: var(--ink) !important;
+}
+
+.dark .border-\[\#D5DFDB\] {
+  border-color: var(--border-line) !important;
+}
+
+.dark .border-\[\#E2EBE7\] {
+  border-color: var(--border-subtle) !important;
+}
+
+.dark .divide-\[\#D5DFDB\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-line) !important;
+}
+
+/* Hover States in Dark Mode */
+.dark .hover\:bg-\[\#F3F6F4\]:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+.dark .hover\:bg-\[\#E5ECE9\]:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+.dark .hover\:text-\[\#122B32\]:hover {
+  color: var(--ink) !important;
+}
+
+/* Clinical Triage Alerts in Dark Mode */
+.dark .bg-\[\#FFF5F5\] {
+  background-color: var(--triage-red-bg) !important;
+}
+.dark .border-\[\#F87171\] {
+  border-color: var(--triage-red-border) !important;
+}
+.dark .text-\[\#B91C1C\],
+.dark .text-\[\#C92A2A\] {
+  color: var(--triage-red-text) !important;
+}
+
+.dark .bg-\[\#FFFBEB\] {
+  background-color: var(--triage-amber-bg) !important;
+}
+.dark .border-\[\#D9730D\],
+.dark .border-\[\#D9730D\]\/30 {
+  border-color: var(--triage-amber-border) !important;
+}
+.dark .text-\[\#92400E\] {
+  color: var(--triage-amber-text) !important;
+}
+
+.dark .bg-\[\#F0FDF4\] {
+  background-color: var(--triage-green-bg) !important;
+}
+.dark .border-\[\#4ADE80\] {
+  border-color: var(--triage-green-border) !important;
+}
+.dark .text-\[\#166534\],
+.dark .text-\[\#2B8A3E\] {
+  color: var(--triage-green-text) !important;
+}
+
+/* Form inputs, select boxes, datetime pickers */
+.dark input[type="text"],
+.dark input[type="datetime-local"],
+.dark input[type="number"],
+.dark select {
+  background-color: var(--surface) !important;
+  color: var(--ink) !important;
+  border-color: var(--border-line) !important;
+}
+
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+/* Recharts Dark Theme Tuning */
+.dark .recharts-cartesian-grid line {
+  stroke: var(--border-line) !important;
+  opacity: 0.8;
+}
+.dark .recharts-cartesian-axis-line,
+.dark .recharts-cartesian-axis-tick-line {
+  stroke: var(--border-line) !important;
+}
+.dark .recharts-text,
+.dark .recharts-cartesian-axis-tick text {
+  fill: var(--ink-muted) !important;
+}
+.dark .recharts-default-tooltip {
+  background-color: var(--surface-raised) !important;
+  border: 1px solid var(--border-line) !important;
+  border-radius: 6px !important;
+  color: var(--ink) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+.dark .recharts-tooltip-item {
+  color: var(--ink) !important;
+}
+.dark .recharts-brush-slide {
+  fill: var(--signage-teal) !important;
+  fill-opacity: 0.25 !important;
+}
+.dark .recharts-brush-traveller rect {
+  fill: var(--signage-teal) !important;
+  stroke: var(--canvas) !important;
+}

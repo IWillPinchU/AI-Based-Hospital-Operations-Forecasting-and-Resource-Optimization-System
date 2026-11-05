@@ -109,7 +109,7 @@ export function RecommendationList({
             return (
               <div
                 key={rec.id}
-                className="p-4 sm:p-5 rounded border border-[#D5DFDB] bg-[#FDFEFE] hover:bg-white transition-colors"
+                className="p-4 sm:p-5 rounded border border-[#D5DFDB] bg-[#F8FAFC] hover:bg-white transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
