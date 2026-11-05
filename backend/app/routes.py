@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.ingestion import ingest_operational_csv, ingest_single_record
 from app.state import get_current_hospital_state
-from app.forecast import get_ed_forecast
+from app.forecast import get_ed_forecast, get_model_benchmark
 from app.anomaly import detect_ed_anomalies
 from app.optimizer import get_resource_recommendations
 from app.websocket_manager import manager
@@ -14,6 +14,7 @@ from app.schemas import (
     RecordIngestionResponse,
     CurrentStateResponse,
     ForecastResponse,
+    ModelBenchmarkResponse,
     AnomalyResponse,
     RecommendationResponse,
 )
@@ -75,10 +76,19 @@ def read_current_state(db: Session = Depends(get_db)):
     return get_current_hospital_state(db)
 
 
+@router.get("/forecast/models", response_model=ModelBenchmarkResponse, tags=["Layer 2"])
+def read_forecasting_models_benchmark():
+    """Layer 2: Returns the comparative benchmark leaderboard comparing all models."""
+    return get_model_benchmark()
+
+
 @router.get("/forecast", response_model=ForecastResponse, tags=["Layer 2"])
-def read_ed_forecast(db: Session = Depends(get_db)):
-    """Layer 2: Returns next-hour ED arrival prediction using 25-hour lags."""
-    return get_ed_forecast(db)
+def read_ed_forecast(
+    model: str = "hist_gbr",
+    db: Session = Depends(get_db),
+):
+    """Layer 2: Returns next-hour ED arrival prediction using requested model paradigm."""
+    return get_ed_forecast(db, model_name=model)
 
 
 @router.get("/anomalies", response_model=AnomalyResponse, tags=["Layer 3"])

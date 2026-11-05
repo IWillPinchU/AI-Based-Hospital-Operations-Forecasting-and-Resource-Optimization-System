@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, TrendingDown, Minus, Clock, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Clock, AlertTriangle, Award } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -19,9 +19,26 @@ interface ForecastCardProps {
   data: ForecastResponse | null;
   isLoading: boolean;
   error: string | null;
+  selectedModel: string;
+  onSelectModel: (modelId: string) => void;
+  onOpenBenchmarks?: () => void;
 }
 
-export function ForecastCard({ data, isLoading, error }: ForecastCardProps) {
+const MODEL_OPTIONS = [
+  { id: "hist_gbr", label: "HistGBR (Tree)" },
+  { id: "lstm", label: "PyTorch LSTM" },
+  { id: "holt_winters", label: "Holt-Winters" },
+  { id: "seasonal_naive", label: "Seasonal Naive" },
+];
+
+export function ForecastCard({
+  data,
+  isLoading,
+  error,
+  selectedModel,
+  onSelectModel,
+  onOpenBenchmarks,
+}: ForecastCardProps) {
   if (isLoading) {
     return (
       <div className="bg-white border border-[#D5DFDB] rounded p-6 h-full flex items-center justify-center text-sm text-[#4A6369]">
@@ -81,7 +98,7 @@ export function ForecastCard({ data, isLoading, error }: ForecastCardProps) {
     >
       {/* Card Header */}
       <div>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="font-heading text-base sm:text-lg font-bold text-[#122B32]">
               Next-hour arrival forecast
@@ -92,10 +109,44 @@ export function ForecastCard({ data, isLoading, error }: ForecastCardProps) {
             </div>
           </div>
 
-          {/* Model Specification Note (no class name, no MAE) */}
-          <span className="text-[11px] font-medium px-2.5 py-1 bg-[#F3F6F4] text-[#4A6369] rounded border border-[#D5DFDB]">
-            Gradient boosting model
-          </span>
+          <div className="flex items-center gap-2">
+            {onOpenBenchmarks && (
+              <button
+                type="button"
+                onClick={onOpenBenchmarks}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0A6E73] bg-[#E8F3F1] hover:bg-[#0A6E73] hover:text-white rounded border border-[#0A6E73]/30 transition-colors"
+                title="View comparative evaluation across all 4 model paradigms"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Leaderboard</span>
+              </button>
+            )}
+
+            <span className="text-[11px] font-medium px-2.5 py-1 bg-[#F3F6F4] text-[#4A6369] rounded border border-[#D5DFDB]">
+              {data.model_metadata.paradigm || data.model_metadata.model_name}
+            </span>
+          </div>
+        </div>
+
+        {/* Model Switcher Tabs */}
+        <div className="mt-3 flex flex-wrap gap-1 p-1 bg-[#F3F6F4] rounded border border-[#D5DFDB]">
+          {MODEL_OPTIONS.map((opt) => {
+            const isSelected = selectedModel === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onSelectModel(opt.id)}
+                className={`text-xs px-2.5 py-1 rounded font-medium transition-all ${
+                  isSelected
+                    ? "bg-[#0A6E73] text-white shadow-xs"
+                    : "text-[#4A6369] hover:text-[#122B32] hover:bg-white/80"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Primary Metric & Delta */}

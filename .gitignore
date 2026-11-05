@@ -12,6 +12,8 @@ build/
 # Data & Models
 *.pkl
 *.joblib
+*.pt
+*.pth
 *.parquet
 *.db
 *.sqlite

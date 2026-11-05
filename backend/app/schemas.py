@@ -69,6 +69,28 @@ class CurrentStateResponse(BaseModel):
 class ModelMetadata(BaseModel):
     model_name: str
     version: str
+    paradigm: Optional[str] = None
+    model_id: Optional[str] = None
+    mae: Optional[float] = None
+    latency_ms: Optional[float] = None
+
+
+class ModelBenchmarkItem(BaseModel):
+    id: str
+    name: str
+    paradigm: str
+    library: str
+    mae: float
+    rmse: float
+    latency_ms: float
+    description: str
+    is_default: bool = False
+
+
+class ModelBenchmarkResponse(BaseModel):
+    timestamp: str
+    evaluation_split: str
+    models: List[ModelBenchmarkItem]
 
 
 class HourlyArrival(BaseModel):
@@ -89,6 +111,7 @@ class ForecastResponse(BaseModel):
     expected_net_change: float
     recent_arrivals: List[HourlyArrival] = []
     model_metadata: ModelMetadata
+    available_models: List[str] = ["hist_gbr", "lstm", "holt_winters", "seasonal_naive"]
 
     @field_validator("target_timestamp", mode="before")
     @classmethod

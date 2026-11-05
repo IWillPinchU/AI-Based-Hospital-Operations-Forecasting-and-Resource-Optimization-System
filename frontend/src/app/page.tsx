@@ -7,12 +7,14 @@ import {
   fetchForecast,
   fetchAnomalies,
   fetchRecommendations,
+  fetchModelBenchmarks,
 } from "@/lib/api";
 import {
   CurrentStateResponse,
   ForecastResponse,
   AnomalyResponse,
   RecommendationResponse,
+  ModelBenchmarkItem,
 } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { IngestionModal } from "@/components/IngestionModal";
@@ -20,6 +22,7 @@ import { CurrentStateStrip } from "@/components/CurrentStateStrip";
 import { ForecastCard } from "@/components/ForecastCard";
 import { AnomalySign } from "@/components/AnomalySign";
 import { RecommendationList } from "@/components/RecommendationList";
+import { ModelBenchmarkModal } from "@/components/ModelBenchmarkModal";
 import { useTelemetryWebSocket } from "@/lib/useTelemetryWebSocket";
 
 const POLL_INTERVAL_MS = 10000;
@@ -52,6 +55,20 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [errorRecommendations, setErrorRecommendations] = useState<string | null>(null);
+
+  // Multi-Model Forecasting State
+  const [selectedModel, setSelectedModel] = useState<string>("hist_gbr");
+  const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
+  const [benchmarkModels, setBenchmarkModels] = useState<ModelBenchmarkItem[]>([]);
+
+  // Load benchmarks once on mount
+  useEffect(() => {
+    fetchModelBenchmarks()
+      .then((res) => {
+        if (res && res.models) setBenchmarkModels(res.models);
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch all endpoints independently for isolated resilience
   const refreshDashboard = useCallback((showLoading: boolean) => {
@@ -111,7 +128,7 @@ export default function DashboardPage() {
     );
 
     run(
-      fetchForecast,
+      () => fetchForecast(selectedModel),
       (data) => {
         setForecast(data);
         setErrorForecast(null);
@@ -151,6 +168,23 @@ export default function DashboardPage() {
       setLoadingRecommendations,
       "Failed to load recommendations."
     );
+  }, [selectedModel]);
+
+  // When model selection changes, re-fetch the forecast with that model
+  const handleSelectModel = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+    setLoadingForecast(true);
+    fetchForecast(modelId)
+      .then((data) => {
+        setForecast(data);
+        setErrorForecast(null);
+      })
+      .catch((err) => {
+        setErrorForecast(err?.message || "Failed to load forecast for selected model.");
+      })
+      .finally(() => {
+        setLoadingForecast(false);
+      });
   }, []);
 
   // Real-time WebSocket connection
@@ -230,6 +264,9 @@ export default function DashboardPage() {
                   data={forecast}
                   isLoading={loadingForecast}
                   error={errorForecast}
+                  selectedModel={selectedModel}
+                  onSelectModel={handleSelectModel}
+                  onOpenBenchmarks={() => setIsBenchmarkModalOpen(true)}
                 />
               </div>
 
@@ -259,6 +296,18 @@ export default function DashboardPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           refreshDashboard(true);
+        }}
+      />
+
+      {/* Model Benchmark Leaderboard Modal */}
+      <ModelBenchmarkModal
+        isOpen={isBenchmarkModalOpen}
+        onClose={() => setIsBenchmarkModalOpen(false)}
+        models={benchmarkModels}
+        selectedModel={selectedModel}
+        onSelectModel={(id) => {
+          handleSelectModel(id);
+          setIsBenchmarkModalOpen(false);
         }}
       />
     </div>

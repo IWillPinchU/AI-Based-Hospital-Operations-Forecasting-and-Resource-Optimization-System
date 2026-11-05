@@ -4,6 +4,7 @@ import {
   AnomalyResponse,
   RecommendationResponse,
   IngestionResponse,
+  ModelBenchmarkResponse,
 } from "./types";
 
 const API_BASE =
@@ -45,11 +46,19 @@ export async function fetchCurrentState(): Promise<CurrentStateResponse> {
   return handleResponse<CurrentStateResponse>(res);
 }
 
-export async function fetchForecast(): Promise<ForecastResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/forecast`, {
+export async function fetchForecast(model: string = "hist_gbr"): Promise<ForecastResponse> {
+  const query = model ? `?model=${encodeURIComponent(model)}` : "";
+  const res = await fetch(`${API_BASE}/api/v1/forecast${query}`, {
     cache: "no-store",
   });
   return handleResponse<ForecastResponse>(res);
+}
+
+export async function fetchModelBenchmarks(): Promise<ModelBenchmarkResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/forecast/models`, {
+    cache: "no-store",
+  });
+  return handleResponse<ModelBenchmarkResponse>(res);
 }
 
 export async function fetchAnomalies(): Promise<AnomalyResponse> {

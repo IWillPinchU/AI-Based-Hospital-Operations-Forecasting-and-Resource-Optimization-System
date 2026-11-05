@@ -31,6 +31,28 @@ export interface HourlyArrival {
 export interface ModelMetadata {
   model_name: string;
   version: string;
+  paradigm?: string;
+  model_id?: string;
+  mae?: number;
+  latency_ms?: number;
+}
+
+export interface ModelBenchmarkItem {
+  id: string;
+  name: string;
+  paradigm: string;
+  library: string;
+  mae: number;
+  rmse: number;
+  latency_ms: number;
+  description: string;
+  is_default: boolean;
+}
+
+export interface ModelBenchmarkResponse {
+  timestamp: string;
+  evaluation_split: string;
+  models: ModelBenchmarkItem[];
 }
 
 export interface ForecastResponse {
@@ -40,6 +62,7 @@ export interface ForecastResponse {
   expected_net_change: number;
   recent_arrivals: HourlyArrival[];
   model_metadata: ModelMetadata;
+  available_models?: string[];
 }
 
 export type AnomalySeverity =
