@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff, FileText, Sun, Moon } from "lucide-react";
+import { Activity, Upload, Clock, RefreshCw, BarChart3, WifiOff, FileText, Sun, Moon, Code } from "lucide-react";
 import { formatUtcDateTime } from "@/lib/formatters";
 import { useTheme } from "@/lib/ThemeContext";
 import { useIsMounted } from "@/lib/useIsMounted";
@@ -118,6 +118,18 @@ export function Navbar({
               </span>
             </div>
           )}
+
+          {/* API Documentation Link */}
+          <a
+            href="http://localhost:8000/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden lg:inline-flex items-center gap-1.5 bg-white border border-[#D5DFDB] hover:bg-[#F3F6F4] text-[#122B32] text-xs font-semibold px-2.5 py-1.5 sm:py-2 rounded transition-colors"
+            title="Open FastAPI interactive OpenAPI Swagger documentation in a new tab"
+          >
+            <Code className="w-3.5 h-3.5 text-[#0A6E73] shrink-0" aria-hidden="true" />
+            <span>API Docs</span>
+          </a>
 
           {/* Shift Report Button */}
           {onOpenShiftReport && (
