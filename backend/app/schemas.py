@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
+from app.utils import ensure_utc_validator
 
 
 class OperationalRowSchema(BaseModel):
@@ -23,6 +24,11 @@ class IngestionResponse(BaseModel):
     rows_updated: int
     latest_timestamp: datetime
 
+    @field_validator("latest_timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        return ensure_utc_validator(v)
+
 
 class RecordIngestionResponse(BaseModel):
     """Response returned after a single live record is stored."""
@@ -33,9 +39,7 @@ class RecordIngestionResponse(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)
 
 
 class DepartmentMetrics(BaseModel):
@@ -58,9 +62,7 @@ class CurrentStateResponse(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)
 
 
 # Schemas for future layers (declared here per plan.md §11.1)
@@ -76,9 +78,7 @@ class HourlyArrival(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)
 
 
 class ForecastResponse(BaseModel):
@@ -93,9 +93,7 @@ class ForecastResponse(BaseModel):
     @field_validator("target_timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)
 
 
 class AnomalyResponse(BaseModel):
@@ -111,9 +109,7 @@ class AnomalyResponse(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)
 
 
 class RecommendationItem(BaseModel):
@@ -143,6 +139,4 @@ class RecommendationResponse(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def ensure_utc(cls, v):
-        if isinstance(v, datetime) and v.tzinfo is None:
-            return v.replace(tzinfo=timezone.utc)
-        return v
+        return ensure_utc_validator(v)

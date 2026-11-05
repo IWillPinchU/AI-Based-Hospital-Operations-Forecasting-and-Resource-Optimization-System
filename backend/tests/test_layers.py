@@ -540,3 +540,31 @@ def test_layer_4_bed_and_icu_rules_fire_separately_and_together(db_session):
     rec_neither = next((r for r in res_neither.recommendations if r.id == "REC-002"), None)
     assert rec_neither is None
 
+
+def test_utc_normalization_utility():
+    """Verify shared to_utc and ensure_utc_validator normalize naive and offset datetimes."""
+    from datetime import datetime, timezone, timedelta
+    from app.utils import to_utc, ensure_utc_validator
+
+    # 1. None returns None
+    assert to_utc(None) is None
+    assert ensure_utc_validator(None) is None
+
+    # 2. Naive datetime gets assigned UTC tzinfo without shifting values
+    naive = datetime(2026, 10, 29, 14, 0, 0)
+    res_naive = to_utc(naive)
+    assert res_naive.tzinfo == timezone.utc
+    assert res_naive.hour == 14
+
+    # 3. Aware datetime with non-UTC offset is converted to UTC
+    offset_tz = timezone(timedelta(hours=5, minutes=30))  # IST +05:30
+    aware_ist = datetime(2026, 10, 29, 19, 30, 0, tzinfo=offset_tz)
+    res_aware = to_utc(aware_ist)
+    assert res_aware.tzinfo == timezone.utc
+    assert res_aware.hour == 14  # 19:30 IST is 14:00 UTC
+
+    # 4. ensure_utc_validator preserves non-datetime inputs
+    assert ensure_utc_validator("string_val") == "string_val"
+    assert ensure_utc_validator(123) == 123
+    assert ensure_utc_validator(naive).tzinfo == timezone.utc
+

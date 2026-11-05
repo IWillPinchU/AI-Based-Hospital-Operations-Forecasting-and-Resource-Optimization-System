@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import OperationalMetrics
 from app.schemas import ForecastResponse, HourlyArrival, ModelMetadata
+from app.utils import to_utc
 
 MODEL_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "models", "ed_forecaster.joblib")
@@ -58,11 +59,8 @@ def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastRespon
             detail="Insufficient lag data. Upload at least 25 hours of operational data.",
         )
 
-    def _utc(dt):
-        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
-
     for newer, older in zip(rows, rows[1:]):
-        if _utc(newer.timestamp) - _utc(older.timestamp) != timedelta(hours=1):
+        if to_utc(newer.timestamp) - to_utc(older.timestamp) != timedelta(hours=1):
             raise HTTPException(
                 status_code=400,
                 detail="Data has a gap in the last 25 hours; upload or send the missing hours",
@@ -98,20 +96,12 @@ def get_ed_forecast(db: Session, model_path: str = MODEL_PATH) -> ForecastRespon
     predicted_ed_arrivals = round(max(0.0, pred), 1)
     expected_net_change = round(predicted_ed_arrivals - latest.ed_arrivals, 1)
 
-    target_ts = latest.timestamp + timedelta(hours=1)
-    if target_ts.tzinfo is None:
-        target_ts = target_ts.replace(tzinfo=timezone.utc)
-    else:
-        target_ts = target_ts.astimezone(timezone.utc)
+    target_ts = to_utc(latest.timestamp + timedelta(hours=1))
 
     # 24 most recent observed values, oldest first
     recent_arrivals = [
         HourlyArrival(
-            timestamp=(
-                r.timestamp.replace(tzinfo=timezone.utc)
-                if r.timestamp.tzinfo is None
-                else r.timestamp.astimezone(timezone.utc)
-            ),
+            timestamp=to_utc(r.timestamp),
             arrivals=r.ed_arrivals,
         )
         for r in reversed(rows[:24])

@@ -30,6 +30,12 @@ export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalPro
       setFile(null);
       return;
     }
+    const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
+    if (selected.size > MAX_FILE_SIZE_BYTES) {
+      setError("File exceeds the 50MB size limit. Please select a smaller CSV file.");
+      setFile(null);
+      return;
+    }
     setFile(selected);
   };
 

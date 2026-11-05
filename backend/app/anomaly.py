@@ -1,4 +1,3 @@
-from datetime import timezone
 from fastapi import HTTPException
 from sqlalchemy import desc, extract
 from sqlalchemy.orm import Session
@@ -11,6 +10,7 @@ from app.config import (
 )
 from app.database import OperationalMetrics
 from app.schemas import AnomalyResponse
+from app.utils import to_utc
 
 
 def detect_ed_anomalies(db: Session) -> AnomalyResponse:
@@ -90,11 +90,7 @@ def detect_ed_anomalies(db: Session) -> AnomalyResponse:
         f"the historical {day_name} {time_str} baseline ({expected_baseline:.1f})."
     )
 
-    ts = (
-        latest.timestamp.replace(tzinfo=timezone.utc)
-        if latest.timestamp.tzinfo is None
-        else latest.timestamp.astimezone(timezone.utc)
-    )
+    ts = to_utc(latest.timestamp)
 
     return AnomalyResponse(
         timestamp=ts,

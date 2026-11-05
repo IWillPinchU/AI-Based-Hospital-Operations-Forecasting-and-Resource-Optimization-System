@@ -1,5 +1,4 @@
 import math
-from datetime import timezone
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -19,6 +18,7 @@ from app.schemas import (
     RecommendationResponse,
     ResourceState,
 )
+from app.utils import to_utc
 
 
 def get_resource_recommendations(db: Session) -> RecommendationResponse:
@@ -114,11 +114,7 @@ def get_resource_recommendations(db: Session) -> RecommendationResponse:
     else:
         status_summary = "Operational capacity and staffing within acceptable limits."
 
-    ts = (
-        latest.timestamp.replace(tzinfo=timezone.utc)
-        if latest.timestamp.tzinfo is None
-        else latest.timestamp.astimezone(timezone.utc)
-    )
+    ts = to_utc(latest.timestamp)
 
     return RecommendationResponse(
         timestamp=ts,

@@ -4,8 +4,10 @@ import pandas as pd
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import MAX_CSV_BYTES
 from app.database import OperationalMetrics
 from app.schemas import IngestionResponse, OperationalRowSchema, RecordIngestionResponse
+from app.utils import to_utc
 
 REQUIRED_COLUMNS = [
     "timestamp",
@@ -75,8 +77,7 @@ def parse_and_validate_csv(file_bytes: bytes) -> pd.DataFrame:
 
 def ingest_single_record(record: OperationalRowSchema, db: Session) -> RecordIngestionResponse:
     """Upserts one live hourly record keyed by its UTC timestamp."""
-    ts = record.timestamp
-    ts_utc = ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts.astimezone(timezone.utc)
+    ts_utc = to_utc(record.timestamp)
 
     # SQLite stores naive UTC, so compare against the naive UTC value
     existing = (
@@ -118,11 +119,10 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading uploaded file: {str(e)}")
 
-    MAX_CSV_BYTES = 50 * 1024 * 1024  # 50 MB
     if len(file_bytes) > MAX_CSV_BYTES:
         raise HTTPException(
             status_code=413,
-            detail="File size exceeds the 50MB limit.",
+            detail=f"File size exceeds the {MAX_CSV_BYTES // (1024 * 1024)}MB limit.",
         )
 
     df = parse_and_validate_csv(file_bytes)
@@ -131,10 +131,6 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
     rows_processed = len(df)
     rows_inserted = 0
     rows_updated = 0
-
-    # Normalize to UTC-aware datetime for robust comparison across database dialects (SQLite/PostgreSQL)
-    def normalize_utc(dt: datetime) -> datetime:
-        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
     # Scoped query: Query only existing records that overlap with the uploaded time range
     csv_timestamps = [row["timestamp"].to_pydatetime() for _, row in df.iterrows()]
@@ -145,7 +141,7 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
     max_bound = (max_ts + buffer).replace(tzinfo=None) if max_ts.tzinfo else (max_ts + buffer)
 
     existing_records = {
-        normalize_utc(rec.timestamp): rec
+        to_utc(rec.timestamp): rec
         for rec in db.query(OperationalMetrics)
         .filter(
             OperationalMetrics.timestamp >= min_bound,
@@ -158,7 +154,7 @@ def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:
 
     for _, row in df.iterrows():
         ts = row["timestamp"].to_pydatetime()
-        ts_norm = normalize_utc(ts)
+        ts_norm = to_utc(ts)
         latest_ts = ts if latest_ts is None or ts > latest_ts else latest_ts
 
         # Match by UTC timestamp

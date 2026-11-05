@@ -82,6 +82,22 @@ def test_schema_validation_ranges(client):
     assert response_icu.status_code == 422
 
 
+def test_csv_upload_size_limit(client, monkeypatch):
+    """File size exceeding MAX_CSV_BYTES is rejected with HTTP 413."""
+    import app.ingestion as ing
+    monkeypatch.setattr(ing, "MAX_CSV_BYTES", 50)
+    csv_content = (
+        "timestamp,ed_arrivals,ed_patients,available_beds,icu_occupancy_pct,nurses_available,doctors_available\n"
+        "2026-10-29T10:00:00Z,30,25,60,78.0,8,3\n"
+    )
+    response = client.post(
+        "/api/v1/ingest/csv",
+        files={"file": ("too_large.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv")},
+    )
+    assert response.status_code == 413
+    assert "File size exceeds" in response.json()["detail"]
+
+
 def test_reuploading_same_csv_is_idempotent(client):
     """Demo resilience: Re-uploading the same CSV updates existing rows without crashing or duplicating."""
     csv_content = (
