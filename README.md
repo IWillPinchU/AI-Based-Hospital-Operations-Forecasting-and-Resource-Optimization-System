@@ -194,3 +194,12 @@ The Next.js dashboard will be served at `http://localhost:3000`.
 2. Click **Upload Operational CSV** in the top navigation bar.
 3. Select `hospital_operations_synthetic.csv` (or `surge_demo.csv` to demonstrate critical surge triage and nurse redeployment).
 4. Click **Upload & Process**. The dashboard will ingest the records into SQLite and immediately display live telemetry, next-hour arrival forecasts, anomaly classifications, and advisory staffing recommendations.
+
+### 7. Live feed simulator
+With the backend running and a CSV already loaded, simulate new hourly records arriving:
+```powershell
+.\.venv\Scripts\python.exe backend/scripts/simulate_live_feed.py --count 3 --interval 2
+```
+Each step reads the latest timestamp from `/api/v1/current-state`, builds the next hour's record (values copied from the same hour of the week in the source CSV), and sends it to the new endpoint `POST /api/v1/ingest/record`. The dashboard picks up each new record on refresh.
+
+Note: this endpoint has no authentication; the demo is intended for localhost only.

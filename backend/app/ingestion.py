@@ -5,7 +5,7 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import OperationalMetrics
-from app.schemas import IngestionResponse, OperationalRowSchema
+from app.schemas import IngestionResponse, OperationalRowSchema, RecordIngestionResponse
 
 REQUIRED_COLUMNS = [
     "timestamp",
@@ -71,6 +71,38 @@ def parse_and_validate_csv(file_bytes: bytes) -> pd.DataFrame:
             )
 
     return df
+
+
+def ingest_single_record(record: OperationalRowSchema, db: Session) -> RecordIngestionResponse:
+    """Upserts one live hourly record keyed by its UTC timestamp."""
+    ts = record.timestamp
+    ts_utc = ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts.astimezone(timezone.utc)
+
+    # SQLite stores naive UTC, so compare against the naive UTC value
+    existing = (
+        db.query(OperationalMetrics)
+        .filter(OperationalMetrics.timestamp == ts_utc.replace(tzinfo=None))
+        .first()
+    )
+
+    values = {
+        "ed_arrivals": record.ed_arrivals,
+        "ed_patients": record.ed_patients,
+        "available_beds": record.available_beds,
+        "icu_occupancy_pct": record.icu_occupancy_pct,
+        "nurses_available": record.nurses_available,
+        "doctors_available": record.doctors_available,
+    }
+    if existing is not None:
+        for name, value in values.items():
+            setattr(existing, name, value)
+        action = "updated"
+    else:
+        db.add(OperationalMetrics(timestamp=ts_utc, **values))
+        action = "inserted"
+    db.commit()
+
+    return RecordIngestionResponse(status="success", action=action, timestamp=ts_utc)
 
 
 def ingest_operational_csv(file: UploadFile, db: Session) -> IngestionResponse:

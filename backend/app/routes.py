@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.ingestion import ingest_operational_csv
+from app.ingestion import ingest_operational_csv, ingest_single_record
 from app.state import get_current_hospital_state
 from app.forecast import get_ed_forecast
 from app.anomaly import detect_ed_anomalies
 from app.optimizer import get_resource_recommendations
 from app.schemas import (
     IngestionResponse,
+    OperationalRowSchema,
+    RecordIngestionResponse,
     CurrentStateResponse,
     ForecastResponse,
     AnomalyResponse,
@@ -22,6 +24,12 @@ router = APIRouter(prefix="/api/v1")
 def upload_operational_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Ingests a CSV containing hourly operational metrics with idempotent upsert."""
     return ingest_operational_csv(file, db)
+
+
+@router.post("/ingest/record", response_model=RecordIngestionResponse, tags=["Ingestion"])
+def upload_operational_record(record: OperationalRowSchema, db: Session = Depends(get_db)):
+    """Ingests one live hourly record with upsert on its UTC timestamp."""
+    return ingest_single_record(record, db)
 
 
 @router.get("/current-state", response_model=CurrentStateResponse, tags=["Layer 1"])

@@ -24,6 +24,20 @@ class IngestionResponse(BaseModel):
     latest_timestamp: datetime
 
 
+class RecordIngestionResponse(BaseModel):
+    """Response returned after a single live record is stored."""
+    status: str
+    action: str  # inserted | updated
+    timestamp: datetime
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def ensure_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
+
 class DepartmentMetrics(BaseModel):
     """Calculated operational load ratios for Layer 1 Current State."""
     patient_to_nurse_ratio: float
