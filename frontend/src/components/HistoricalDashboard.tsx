@@ -305,8 +305,8 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
       {/* Custom Date Pickers (Shown only when preset === 'custom') */}
       {preset === "custom" && (
         <div className="bg-white border border-[#D5DFDB] rounded p-4 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
               <label htmlFor="custom-start" className="text-xs font-semibold text-[#4A6369]">
                 Start Date/Time (UTC):
               </label>
@@ -315,10 +315,10 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                 type="datetime-local"
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
+                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32] w-full sm:w-auto"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
               <label htmlFor="custom-end" className="text-xs font-semibold text-[#4A6369]">
                 End Date/Time (UTC):
               </label>
@@ -327,18 +327,18 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                 type="datetime-local"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32]"
+                className="text-xs border border-[#D5DFDB] rounded px-2.5 py-1.5 text-[#122B32] w-full sm:w-auto"
               />
             </div>
             <button
               type="button"
               onClick={handleApplyCustom}
               disabled={Boolean(customStart && customEnd && customStart > customEnd)}
-              className="px-3.5 py-1.5 text-xs font-semibold rounded bg-[#0A6E73] text-white hover:bg-[#08565A] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded bg-[#0A6E73] text-white hover:bg-[#08565A] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed self-start sm:self-auto"
             >
               Apply Filter
             </button>
-            <span className="text-[11px] text-[#0A6E73] font-medium">
+            <span className="text-[11px] text-[#0A6E73] font-medium w-full sm:w-auto">
               💡 All telemetry timestamps in this system are stored and evaluated in UTC.
             </span>
           </div>
@@ -489,7 +489,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
               {/* Metric Stream Selector & Trend Overlay Toggle */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D5DFDB] pb-3">
                 {/* Metric Stream Switcher */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-semibold text-[#4A6369] mr-1">Stream:</span>
                   {(
                     [
@@ -502,7 +502,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                       key={m.id}
                       type="button"
                       onClick={() => setStream(m.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer ${
+                      className={`px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer ${
                         stream === m.id
                           ? "bg-[#122B32] text-white"
                           : "bg-[#F3F6F4] text-[#4A6369] hover:text-[#122B32]"
@@ -529,11 +529,11 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
               </div>
 
               {/* Chart Subheading & Instructions */}
-              <div className="flex items-center justify-between text-xs text-[#4A6369]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-[#4A6369]">
                 <span>
                   Showing {chartData.length} hourly observation points ({formatShortDate(summary.start_timestamp)} — {formatShortDate(summary.end_timestamp)})
                 </span>
-                <span className="text-[11px] text-[#0A6E73]">
+                <span className="text-[11px] text-[#0A6E73] hidden md:inline">
                   💡 Tip: Drag handles on the bottom slider to zoom or scrub through time
                 </span>
               </div>
@@ -759,7 +759,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
                     <span className="bg-white px-2 py-0.5 rounded border border-[#D5DFDB] text-[#122B32]">
                       {scrubbedCount} {scrubbedCount === 1 ? "hour" : "hours"} visible
                     </span>
-                    <span>◀ Drag slider handles to zoom or scrub ▶</span>
+                    <span className="hidden sm:inline">◀ Drag slider handles to zoom or scrub ▶</span>
                   </div>
                 </div>
               )}
@@ -767,7 +767,7 @@ export function HistoricalDashboard({}: HistoricalDashboardProps) {
           ) : (
             /* Raw Telemetry Data Table */
             <div className="bg-white border border-[#D5DFDB] rounded overflow-hidden">
-              <div className="p-4 border-b border-[#D5DFDB] flex items-center justify-between">
+              <div className="p-3.5 sm:p-4 border-b border-[#D5DFDB] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div>
                   <h4 className="font-heading text-sm font-bold text-[#122B32]">
                     Operational Telemetry Records

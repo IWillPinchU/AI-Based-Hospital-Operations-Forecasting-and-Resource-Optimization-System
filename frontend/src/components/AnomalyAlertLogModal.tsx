@@ -244,7 +244,7 @@ export function AnomalyAlertLogModal({
                 {summary.drops}
               </span>
             </div>
-            <div className="text-center p-2 rounded bg-white border border-[#D5DFDB]">
+            <div className="text-center p-2 rounded bg-white border border-[#D5DFDB] col-span-2 sm:col-span-1">
               <span className="text-[11px] text-[#0A6E73] block font-medium">Active Unresolved</span>
               <span className="font-heading text-lg font-bold text-[#0A6E73]">
                 {summary.unresolved_count}
@@ -404,7 +404,7 @@ export function AnomalyAlertLogModal({
                       {event.explanation}
                     </p>
 
-                    <div className="flex items-center gap-4 text-[11px] text-[#4A6369] pt-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#4A6369] pt-1">
                       <span>
                         Observed: <strong className="text-[#122B32]">{event.observed_value}</strong> arrivals
                       </span>

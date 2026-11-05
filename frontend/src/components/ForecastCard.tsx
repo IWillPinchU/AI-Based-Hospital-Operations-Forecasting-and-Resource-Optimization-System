@@ -150,12 +150,12 @@ export function ForecastCard({
         </div>
 
         {/* Primary Metric & Delta */}
-        <div className="mt-4 flex flex-wrap items-baseline gap-3">
+        <div className="mt-4 flex flex-wrap items-baseline gap-2.5 sm:gap-3">
           <div className="flex items-baseline">
-            <span className="font-heading text-4xl sm:text-5xl font-extrabold text-[#122B32] tabular-numbers">
+            <span className="font-heading text-3xl sm:text-5xl font-extrabold text-[#122B32] tabular-numbers">
               {data.predicted_ed_arrivals.toFixed(1)}
             </span>
-            <span className="text-sm font-semibold text-[#4A6369] ml-2">expected arrivals</span>
+            <span className="text-xs sm:text-sm font-semibold text-[#4A6369] ml-2">expected arrivals</span>
           </div>
 
           <div
@@ -183,7 +183,7 @@ export function ForecastCard({
 
       {/* 24-Hour Observed Trajectory + Forecast Chart */}
       <div className="mt-6 pt-4 border-t border-[#D5DFDB]">
-        <div className="flex items-center justify-between text-xs text-[#4A6369] mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-[#4A6369] mb-3">
           <span>24-hour historical trajectory and next-hour projection</span>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">

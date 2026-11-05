@@ -109,7 +109,7 @@ export function AnomalySign({
       className="bg-white border border-[#D5DFDB] rounded p-5 sm:p-6 flex flex-col justify-between h-full"
     >
       <div>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 sm:gap-3">
           <div>
             <h2 className="font-heading text-base sm:text-lg font-bold text-[#122B32]">
               Arrival pattern status
@@ -121,7 +121,7 @@ export function AnomalySign({
 
           {/* Severity Badge */}
           <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold border ${config.bgClass} ${config.borderClass} ${config.textClass}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold border w-fit ${config.bgClass} ${config.borderClass} ${config.textClass}`}
           >
             {config.icon}
             <span>{config.badgeText}</span>
@@ -131,7 +131,7 @@ export function AnomalySign({
         {/* Primary Deviation Metric */}
         <div className="mt-4">
           <div className="flex items-baseline gap-2">
-            <span className="font-heading text-4xl sm:text-5xl font-extrabold text-[#122B32] tabular-numbers">
+            <span className="font-heading text-3xl sm:text-5xl font-extrabold text-[#122B32] tabular-numbers">
               {isSurge ? `+${data.deviation_pct.toFixed(1)}%` : `${data.deviation_pct.toFixed(1)}%`}
             </span>
             <span className="text-xs text-[#4A6369] font-medium">deviation</span>

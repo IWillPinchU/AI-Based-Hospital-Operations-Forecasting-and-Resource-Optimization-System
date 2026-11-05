@@ -58,21 +58,21 @@ export function RecommendationList({
 
         {/* Resource State Summary Metrics */}
         {resourceState && (
-          <div className="flex items-center gap-4 text-xs bg-[#F3F6F4] px-3.5 py-2 rounded border border-[#D5DFDB] shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs bg-[#F3F6F4] px-3 sm:px-3.5 py-2 rounded border border-[#D5DFDB] shrink-0">
             <div>
               <span className="text-[#4A6369]">Projected load:</span>{" "}
               <strong className="text-[#122B32] tabular-numbers font-semibold">
                 {resourceState.projected_ed_patients}
               </strong>
             </div>
-            <div className="w-px h-4 bg-[#D5DFDB]" aria-hidden="true" />
+            <div className="hidden sm:block w-px h-4 bg-[#D5DFDB]" aria-hidden="true" />
             <div>
               <span className="text-[#4A6369]">Target nurses:</span>{" "}
               <strong className="text-[#122B32] tabular-numbers font-semibold">
                 {resourceState.target_nurses_needed}
               </strong>
             </div>
-            <div className="w-px h-4 bg-[#D5DFDB]" aria-hidden="true" />
+            <div className="hidden sm:block w-px h-4 bg-[#D5DFDB]" aria-hidden="true" />
             <div>
               <span className="text-[#4A6369]">Deficit:</span>{" "}
               <strong
@@ -159,8 +159,8 @@ export function RecommendationList({
                     </div>
                   </div>
 
-                  <div className="text-right sm:shrink-0 text-[11px] text-[#4A6369] flex items-center sm:flex-col sm:items-end gap-1.5">
-                    <ShieldAlert className="w-3.5 h-3.5 text-[#0A6E73]" aria-hidden="true" />
+                  <div className="text-left sm:text-right sm:shrink-0 text-[11px] text-[#4A6369] flex items-center sm:flex-col sm:items-end gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#D5DFDB]/40">
+                    <ShieldAlert className="w-3.5 h-3.5 text-[#0A6E73] shrink-0" aria-hidden="true" />
                     <span>Supervisor verification required</span>
                   </div>
                 </div>

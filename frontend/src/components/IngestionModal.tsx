@@ -102,9 +102,9 @@ export function IngestionModal({ isOpen, onClose, onSuccess }: IngestionModalPro
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4"
     >
-      <div className="bg-white rounded border border-[#D5DFDB] max-w-lg w-full p-6 shadow-lg">
+      <div className="bg-white rounded border border-[#D5DFDB] max-w-lg w-full p-4 sm:p-6 shadow-lg max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-start justify-between pb-4 border-b border-[#D5DFDB]">
           <div>

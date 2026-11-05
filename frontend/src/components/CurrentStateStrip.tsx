@@ -52,15 +52,15 @@ export function CurrentStateStrip({
       aria-label="Current hospital operations status"
       className="bg-white border border-[#D5DFDB] rounded overflow-hidden"
     >
-      <div className="grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-[#D5DFDB]">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-[#D5DFDB] dark:bg-[var(--border-line)]">
         {/* Metric 1: ED Arrivals */}
-        <div className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="p-3.5 sm:p-5 flex flex-col justify-between bg-white dark:bg-[var(--surface)]">
           <div className="flex items-center justify-between text-xs text-[#4A6369]">
             <span>ED arrivals</span>
-            <Activity className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
+            <Activity className="w-4 h-4 text-[#0A6E73] shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2">
-            <span className="font-heading text-3xl font-bold text-[#122B32] tabular-numbers">
+            <span className="font-heading text-2xl sm:text-3xl font-bold text-[#122B32] tabular-numbers">
               {data.ed_arrivals}
             </span>
             <span className="text-xs text-[#4A6369] ml-1.5 font-medium">arrivals/hr</span>
@@ -69,13 +69,13 @@ export function CurrentStateStrip({
         </div>
 
         {/* Metric 2: Active ED Patients */}
-        <div className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="p-3.5 sm:p-5 flex flex-col justify-between bg-white dark:bg-[var(--surface)]">
           <div className="flex items-center justify-between text-xs text-[#4A6369]">
             <span>Active patients</span>
-            <Users className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
+            <Users className="w-4 h-4 text-[#0A6E73] shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2">
-            <span className="font-heading text-3xl font-bold text-[#122B32] tabular-numbers">
+            <span className="font-heading text-2xl sm:text-3xl font-bold text-[#122B32] tabular-numbers">
               {data.ed_patients}
             </span>
             <span className="text-xs text-[#4A6369] ml-1.5 font-medium">in department</span>
@@ -85,9 +85,9 @@ export function CurrentStateStrip({
 
         {/* Metric 3: Inpatient Beds */}
         <div
-          className={`p-4 sm:p-5 flex flex-col justify-between ${
+          className={`p-3.5 sm:p-5 flex flex-col justify-between bg-white dark:bg-[var(--surface)] ${
             bedAlertActive
-              ? "bg-[#FFFBEB] border-l-2 border-l-[#D9730D]"
+              ? "bg-[#FFFBEB] dark:bg-[var(--triage-amber-bg)] border-l-2 border-l-[#D9730D]"
               : ""
           }`}
         >
@@ -96,7 +96,7 @@ export function CurrentStateStrip({
               Inpatient beds
             </span>
             <Bed
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 shrink-0 ${
                 bedAlertActive ? "text-[#D9730D]" : "text-[#0A6E73]"
               }`}
               aria-hidden="true"
@@ -104,7 +104,7 @@ export function CurrentStateStrip({
           </div>
           <div className="mt-2">
             <span
-              className={`font-heading text-3xl font-bold tabular-numbers ${
+              className={`font-heading text-2xl sm:text-3xl font-bold tabular-numbers ${
                 bedAlertActive ? "text-[#92400E]" : "text-[#122B32]"
               }`}
             >
@@ -125,9 +125,9 @@ export function CurrentStateStrip({
 
         {/* Metric 4: ICU Occupancy */}
         <div
-          className={`p-4 sm:p-5 flex flex-col justify-between ${
+          className={`p-3.5 sm:p-5 flex flex-col justify-between bg-white dark:bg-[var(--surface)] ${
             icuAlertActive
-              ? "bg-[#FFF5F5] border-l-2 border-l-[#F87171]"
+              ? "bg-[#FFF5F5] dark:bg-[var(--triage-red-bg)] border-l-2 border-l-[#F87171]"
               : ""
           }`}
         >
@@ -136,7 +136,7 @@ export function CurrentStateStrip({
               ICU occupancy
             </span>
             <Activity
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 shrink-0 ${
                 icuAlertActive ? "text-[#C92A2A]" : "text-[#0A6E73]"
               }`}
               aria-hidden="true"
@@ -144,7 +144,7 @@ export function CurrentStateStrip({
           </div>
           <div className="mt-2">
             <span
-              className={`font-heading text-3xl font-bold tabular-numbers ${
+              className={`font-heading text-2xl sm:text-3xl font-bold tabular-numbers ${
                 icuAlertActive ? "text-[#B91C1C]" : "text-[#122B32]"
               }`}
             >
@@ -157,20 +157,20 @@ export function CurrentStateStrip({
         </div>
 
         {/* Metric 5: Staff on Duty */}
-        <div className="p-4 sm:p-5 flex flex-col justify-between col-span-2 md:col-span-1">
+        <div className="p-3.5 sm:p-5 flex flex-col justify-between col-span-2 lg:col-span-1 bg-white dark:bg-[var(--surface)]">
           <div className="flex items-center justify-between text-xs text-[#4A6369]">
             <span>Staff on duty</span>
-            <UserCheck className="w-4 h-4 text-[#0A6E73]" aria-hidden="true" />
+            <UserCheck className="w-4 h-4 text-[#0A6E73] shrink-0" aria-hidden="true" />
           </div>
           <div className="mt-2 flex items-baseline gap-3">
             <div>
-              <span className="font-heading text-2xl font-bold text-[#122B32] tabular-numbers">
+              <span className="font-heading text-xl sm:text-2xl font-bold text-[#122B32] tabular-numbers">
                 {data.nurses_available}
               </span>
               <span className="text-xs text-[#4A6369] ml-1">nurses</span>
             </div>
             <div>
-              <span className="font-heading text-2xl font-bold text-[#122B32] tabular-numbers">
+              <span className="font-heading text-xl sm:text-2xl font-bold text-[#122B32] tabular-numbers">
                 {data.doctors_available}
               </span>
               <span className="text-xs text-[#4A6369] ml-1">doctors</span>

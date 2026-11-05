@@ -242,33 +242,7 @@ export default function DashboardPage() {
       />
 
       {/* Main Dashboard Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
-        {/* Mobile Navigation Tabs */}
-        <div className="flex lg:hidden items-center justify-center p-1 bg-white rounded border border-[#D5DFDB]">
-          <button
-            type="button"
-            onClick={() => setActiveTab("live")}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded text-center transition-colors cursor-pointer ${
-              activeTab === "live"
-                ? "bg-[#0A6E73] text-white"
-                : "text-[#4A6369] hover:text-[#122B32]"
-            }`}
-          >
-            Live Monitor
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded text-center transition-colors cursor-pointer ${
-              activeTab === "history"
-                ? "bg-[#0A6E73] text-white"
-                : "text-[#4A6369] hover:text-[#122B32]"
-            }`}
-          >
-            Historical Analytics
-          </button>
-        </div>
-
+      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 w-full space-y-4 sm:space-y-6">
         {isEmptyDatabase ? (
           /* Empty State Inviting Upload */
           <div className="bg-white border border-[#D5DFDB] rounded p-12 text-center max-w-xl mx-auto my-12">
